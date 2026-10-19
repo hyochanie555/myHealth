@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>나의 헬스플랜 | 하이클래스짐 동천점 머신 트래커</title>
+  
+  <!-- Favicon & PWA Icons -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏋️‍♂️</text></svg>">
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Preconnect Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- 상단 네비게이션 & 헤더 -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand">
+          <span class="brand-icon">🔥</span>
+          <div class="brand-text">
+            <h1>나의 헬스플랜</h1>
+            <span class="sub-brand">하이클래스짐 동천점 가이드</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="btnQuickRest" class="btn-icon-label" title="휴식 타이머">
+            <span class="icon">⏱️</span>
+            <span class="label">휴식 60초</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 날짜 및 오늘 루틴 안내 바 -->
+      <div class="today-banner">
+        <div class="today-date-info">
+          <span class="today-badge" id="todayBadge">오늘 요일</span>
+          <span class="today-date-str" id="todayDateStr">2026. 10. 19</span>
+        </div>
+        <div class="today-routine-name" id="todayRoutineName">
+          로딩 중...
+        </div>
+      </div>
+
+      <!-- 요일 & 메뉴 네비게이션 탭 -->
+      <nav class="nav-tabs" aria-label="루틴 선택">
+        <button class="nav-tab" data-tab="upper">
+          <span class="tab-day">월·목</span>
+          <span class="tab-title">상체</span>
+        </button>
+        <button class="nav-tab" data-tab="lower">
+          <span class="tab-day">화·금</span>
+          <span class="tab-title">하체</span>
+        </button>
+        <button class="nav-tab" data-tab="cardio">
+          <span class="tab-day">수·토</span>
+          <span class="tab-title">유산소 50분</span>
+        </button>
+        <button class="nav-tab" data-tab="recovery">
+          <span class="tab-day">일</span>
+          <span class="tab-title">스트레칭</span>
+        </button>
+        <button class="nav-tab" data-tab="history">
+          <span class="tab-day">기록</span>
+          <span class="tab-title">운동일지</span>
+        </button>
+        <button class="nav-tab" data-tab="library">
+          <span class="tab-day">도감</span>
+          <span class="tab-title">머신 33종</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="main-content">
+      <!-- 1. 루틴 메인 뷰 (상체 / 하체 / 유산소 / 스트레칭) -->
+      <section id="routineView" class="view-section active">
+        <!-- 루틴 요약 및 프로그레스 카드 -->
+        <div class="routine-header-card">
+          <div class="routine-info-row">
+            <div>
+              <h2 id="currentRoutineTitle" class="routine-heading">하체 & 힙 집중 데이</h2>
+              <p id="currentRoutineSubtitle" class="routine-desc">허벅지 · 둔근 · 햄스트링 완전 정복</p>
+            </div>
+            <div class="time-est-badge">
+              <span id="currentRoutineTime">약 60분</span>
+            </div>
+          </div>
+
+          <!-- 진행률 바 -->
+          <div class="progress-box">
+            <div class="progress-info">
+              <span class="progress-label">오늘 운동 진행률</span>
+              <span class="progress-numbers" id="progressNumbers">0 / 8 완료 (0%)</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+            </div>
+            <div class="remaining-text" id="remainingCountText">남은 운동: 8개</div>
+          </div>
+
+          <!-- 유산소 전용 50분 타이머 컨트롤러 (유산소 탭일 때 노출) -->
+          <div id="cardioTimerBox" class="cardio-timer-box hidden">
+            <div class="cardio-timer-display" id="cardioTimerDisplay">50:00</div>
+            <div class="cardio-timer-actions">
+              <button id="btnStartCardio" class="btn btn-primary">유산소 50분 시작 ▶</button>
+              <button id="btnPauseCardio" class="btn btn-secondary hidden">일시 정지 ⏸</button>
+              <button id="btnResetCardio" class="btn btn-outline">리셋 ↺</button>
+            </div>
+            <p class="cardio-hint">💡 트레드밀 인클라인 걷기(25분) + 천국의 계단/사이클(15분) + 쿨다운(10분)</p>
+          </div>
+        </div>
+
+        <!-- 남은 운동 목록 헤더 -->
+        <div class="section-title-bar">
+          <h3>
+            <span class="icon">⚡</span>
+            <span>남은 운동 목록</span>
+            <span class="count-pill" id="activeExerciseCount">8</span>
+          </h3>
+          <button id="btnResetToday" class="btn-text-sm" title="오늘의 완료 상태 초기화">
+            오늘 운동 다시하기 ↺
+          </button>
+        </div>
+
+        <!-- 카드 리스트 (완료 시 사라짐) -->
+        <div id="activeExercisesList" class="exercise-cards-container">
+          <!-- JS로 동적 생성 -->
+        </div>
+
+        <!-- 모든 운동 완료 축하 배너 (모두 완료 시 등장) -->
+        <div id="allDoneCelebration" class="celebration-card hidden">
+          <div class="celebration-icon">🎉</div>
+          <h3>오늘의 모든 플랜 완료!</h3>
+          <p>오늘도 목표를 달성하셨습니다! 근육이 기분 좋게 성장하고 있습니다. 시원하게 단백질 챙겨 드세요! 💪</p>
+          <div class="celebration-actions">
+            <button id="btnSaveHistoryFromDone" class="btn btn-primary">
+              운동 일지에 저장하기 📝
+            </button>
+          </div>
+        </div>
+
+        <!-- 완료한 운동 접이식 섹션 -->
+        <div id="completedSection" class="completed-section">
+          <button id="btnToggleCompleted" class="completed-toggle-btn">
+            <span>완료한 운동 (<strong id="completedCountNumber">0</strong>개)</span>
+            <span id="completedToggleArrow" class="toggle-arrow">▼</span>
+          </button>
+          <div id="completedExercisesList" class="completed-cards-container hidden">
+            <!-- 완료된 운동 카드들이 여기에 위치함 (되돌리기 가능) -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 운동 일지 & 히스토리 뷰 -->
+      <section id="historyView" class="view-section hidden">
+        <div class="history-summary-card">
+          <h2>📅 나의 운동 기록 & 출석</h2>
+          <p>하루하루 쌓여가는 나의 건강과 근육의 기록입니다.</p>
+          <div class="stats-row">
+            <div class="stat-item">
+              <span class="stat-num" id="totalWorkoutDays">0</span>
+              <span class="stat-lbl">총 운동 일수</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-num" id="thisMonthWorkoutDays">0</span>
+              <span class="stat-lbl">이번 달 출석</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-num" id="recentStreak">0</span>
+              <span class="stat-lbl">연속 출석(일)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오늘 운동 직접 기록하기 -->
+        <div class="log-input-card">
+          <h3>오늘의 운동 한 줄 메모</h3>
+          <textarea id="todayWorkoutNote" placeholder="예: 레그프레스 120kg 4세트 달성! 무릎 통증 전혀 없이 펌핑감 최고였음."></textarea>
+          <button id="btnSaveTodayLog" class="btn btn-primary btn-block">오늘 기록 저장하기 💾</button>
+        </div>
+
+        <!-- 저장된 과거 일지 목록 -->
+        <div class="history-list-box">
+          <div class="section-title-bar">
+            <h3>최근 운동 일지</h3>
+            <div class="history-export-actions">
+              <button id="btnExportData" class="btn-text-sm">데이터 백업(JSON)</button>
+              <label for="importFileInput" class="btn-text-sm file-label">복원</label>
+              <input type="file" id="importFileInput" accept=".json" class="hidden" />
+            </div>
+          </div>
+          <div id="historyLogsList" class="history-logs-container">
+            <!-- JS로 과거 기록 렌더링 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 하이클래스짐 동천점 머신 도감 (33종) 뷰 -->
+      <section id="libraryView" class="view-section hidden">
+        <div class="library-header-card">
+          <h2>🏢 하이클래스짐 동천점 머신 도감</h2>
+          <p>센터에 실제 비치된 33개 최고급 머신의 사진과 사용법을 언제든 확인하세요.</p>
+          
+          <!-- 검색창 -->
+          <div class="search-input-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="machineSearchInput" placeholder="머신 이름 또는 부위 검색 (예: 레그프레스, 가슴, 어깨)" />
+          </div>
+
+          <!-- 부위 필터 버튼 -->
+          <div class="category-filters" id="categoryFilters">
+            <button class="cat-pill active" data-cat="all">전체 (33)</button>
+            <button class="cat-pill" data-cat="chest">가슴 (7)</button>
+            <button class="cat-pill" data-cat="back">등 (11)</button>
+            <button class="cat-pill" data-cat="legs">하체 (11)</button>
+            <button class="cat-pill" data-cat="shoulders">어깨 (3)</button>
+            <button class="cat-pill" data-cat="arms">팔 (1)</button>
+          </div>
+        </div>
+
+        <!-- 머신 그리드 -->
+        <div id="machinesGrid" class="machines-grid">
+          <!-- JS로 동적 렌더링 -->
+        </div>
+      </section>
+    </main>
+
+    <!-- 하단 플로팅 휴식 타이머 바 (활성화 시 슬라이드 업) -->
+    <div id="floatingTimerBar" class="floating-timer-bar hidden">
+      <div class="timer-bar-content">
+        <div class="timer-left">
+          <span class="timer-icon">⏳</span>
+          <div class="timer-texts">
+            <span class="timer-title">세트 간 휴식 중</span>
+            <span id="floatingTimerSeconds" class="timer-countdown">60</span><span class="timer-unit">초</span>
+          </div>
+        </div>
+        <div class="timer-bar-buttons">
+          <button id="btnTimerPlus30" class="btn-timer-ctrl">+30초</button>
+          <button id="btnTimerStop" class="btn-timer-ctrl btn-timer-stop">종료 ✕</button>
+        </div>
+      </div>
+      <div class="timer-progress-line">
+        <div id="timerProgressFill" class="timer-progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- 머신 상세 모달 팝업 -->
+    <div id="machineDetailModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <button id="btnCloseModal" class="btn-close-modal" aria-label="닫기">✕</button>
+        <div class="modal-image-wrap">
+          <img id="modalMachineImage" src="" alt="머신 사진" onerror="this.src='https://placehold.co/600x400/1e293b/ffffff?text=머신+사진';">
+          <span id="modalBrandBadge" class="modal-brand-badge">NEWTECH</span>
+        </div>
+        <div class="modal-body">
+          <div class="modal-meta">
+            <span id="modalCategoryBadge" class="badge-cat">하체</span>
+            <span id="modalTargetText" class="modal-target">허벅지 앞쪽</span>
+          </div>
+          <h3 id="modalMachineName" class="modal-title">머신 이름</h3>
+
+          <div class="guide-item">
+            <div class="guide-label"><span class="icon">📐</span> 좌석 & 패드 세팅</div>
+            <p id="modalSetupTip" class="guide-text">세팅 팁 내용</p>
+          </div>
+
+          <div class="guide-item">
+            <div class="guide-label"><span class="icon">🎯</span> 올바른 동작 팁</div>
+            <p id="modalFormTip" class="guide-text">동작 팁 내용</p>
+          </div>
+
+          <div class="guide-item caution">
+            <div class="guide-label"><span class="icon">⚠️</span> 부상 방지 주의사항</div>
+            <p id="modalCaution" class="guide-text">주의사항 내용</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btnModalConfirm" class="btn btn-primary btn-block">확인 완료</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하이클래스짐 출처 푸터 -->
+    <footer class="app-footer">
+      <p>🏋️‍♂️ 하이클래스짐 동천점 공식 가이드 연동</p>
+      <p class="copyright">나의 헬스플랜 · 매일 건강하고 단단해지는 나의 루틴</p>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/machines.js"></script>
+  <script src="js/routines.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
