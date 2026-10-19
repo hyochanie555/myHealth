@@ -47,7 +47,7 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 768px; /* 태블릿/모바일 중심 최적화, 데스크탑에서도 안정적 뷰 */
+  max-width: 768px; /* 태블릿/모바일 중심 최적화 */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -161,56 +161,112 @@ body {
   color: var(--accent-blue);
 }
 
-/* 네비게이션 탭 */
-.nav-tabs {
-  display: flex;
-  overflow-x: auto;
-  scrollbar-width: none;
+/* === 월.화.수.목.금.토.일 개별 요일 선택 바 === */
+.days-nav-bar {
+  background-color: #0b1220;
+  padding: 8px 12px;
   border-top: 1px solid var(--border-color);
-  background-color: var(--bg-primary);
-  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.days-list {
+  display: flex;
   gap: 6px;
+  justify-content: space-between;
 }
 
-.nav-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.nav-tab {
+.day-btn {
   flex: 1;
-  min-width: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
+  padding: 6px 2px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.day-btn .day-lbl {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.day-btn .day-part {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.day-btn .today-dot {
+  position: absolute;
+  top: -5px;
+  right: -3px;
+  background-color: var(--accent-amber);
+  color: #000;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.day-btn:hover {
+  background-color: var(--bg-card-hover);
+  color: #fff;
+}
+
+.day-btn.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(56, 189, 248, 0.25));
+  border-color: var(--accent-green);
+  color: var(--accent-green-light);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.day-btn.active .day-part {
+  color: var(--accent-blue);
+}
+
+/* 서브 뷰 네비게이션 탭 (운동 루틴 / 달력 일지 / 머신 도감) */
+.sub-nav-tabs {
+  display: flex;
+  background-color: var(--bg-primary);
+  padding: 4px 10px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sub-nav-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 6px;
   background: transparent;
   border: none;
   border-radius: 8px;
   color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.nav-tab .tab-day {
-  font-size: 10px;
-  font-weight: 600;
-  opacity: 0.8;
-}
-
-.nav-tab .tab-title {
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.nav-tab:hover {
+.sub-nav-tab:hover {
   background-color: var(--bg-card);
   color: var(--text-main);
 }
 
-.nav-tab.active {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(56, 189, 248, 0.2));
-  color: var(--accent-green-light);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+.sub-nav-tab.active {
+  background-color: var(--bg-card);
+  color: var(--accent-blue);
+  border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
 /* === 메인 뷰 섹션 === */
@@ -235,6 +291,17 @@ body {
   padding: 18px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-md);
+}
+
+.selected-day-tag {
+  display: inline-block;
+  background-color: rgba(56, 189, 248, 0.2);
+  color: var(--accent-blue);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
 }
 
 .routine-info-row {
@@ -384,7 +451,7 @@ body {
   color: var(--accent-blue);
 }
 
-/* === 운동 카드 스타일 (사라짐 애니메이션 포함) === */
+/* === 운동 카드 스타일 === */
 .exercise-cards-container {
   display: flex;
   flex-direction: column;
@@ -582,7 +649,6 @@ body {
   border-right: 1px solid var(--border-color);
 }
 
-/* 오늘 완료 버튼 (핵심 강조 버튼) */
 .btn-card-action.btn-complete {
   flex: 1.3;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
@@ -728,6 +794,361 @@ body {
   color: var(--accent-amber);
 }
 
+/* ==============================================================
+   === 2. 운동 달력 (Calendar) & 메모 컴포넌트 스타일 ===
+   ============================================================== */
+
+.calendar-card {
+  background: linear-gradient(145deg, #162035, #101726);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-md);
+}
+
+.calendar-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendar-month-heading {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.btn-cal-today {
+  background-color: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--accent-blue);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cal-nav-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-cal-arrow {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-cal-arrow:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--accent-blue);
+}
+
+/* 요일 헤더 */
+.cal-weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cal-th {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.cal-th.sun {
+  color: #f87171;
+}
+
+.cal-th.sat {
+  color: #60a5fa;
+}
+
+/* 날짜 그리드 */
+.cal-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-day-cell {
+  background-color: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  min-height: 64px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.cal-day-cell:hover {
+  background-color: var(--bg-card-hover);
+  border-color: #3b82f6;
+}
+
+.cal-day-cell.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.cal-day-cell.today {
+  border: 1.5px solid var(--accent-amber);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+}
+
+.cal-day-cell.selected {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent-blue);
+}
+
+.cal-cell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cal-day-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.cal-day-cell.today .cal-day-num {
+  color: var(--accent-amber);
+}
+
+.cal-cell-icons {
+  display: flex;
+  gap: 2px;
+  font-size: 10px;
+}
+
+/* 달력 셀 상태 뱃지 (모두 완료, 6/8 완료 등) */
+.cal-status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 3px;
+  border-radius: 4px;
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.cal-status-badge.all-done {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: var(--accent-green-light);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.cal-status-badge.part-done {
+  background-color: rgba(56, 189, 248, 0.2);
+  color: var(--accent-blue);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.cal-memo-preview {
+  font-size: 9px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+/* 범례 */
+.cal-legend {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-badge {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legend-badge.done-all {
+  background-color: var(--accent-green);
+}
+
+.legend-badge.done-part {
+  background-color: var(--accent-blue);
+}
+
+/* 날짜 상세 및 메모 패널 */
+.date-detail-panel {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-md);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-date-tag {
+  font-size: 11px;
+  color: var(--accent-amber);
+  font-weight: 700;
+  display: block;
+}
+
+.panel-date-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.status-all-done {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green-light);
+  border: 1px solid var(--accent-green);
+}
+
+.status-part-done {
+  background-color: rgba(56, 189, 248, 0.2);
+  color: var(--accent-blue);
+  border: 1px solid var(--accent-blue);
+}
+
+.status-none {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-dim);
+}
+
+.panel-workout-summary {
+  background-color: #0b1220;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.workout-item-chip {
+  display: inline-block;
+  background-color: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin: 3px 4px 3px 0;
+}
+
+.empty-workout-msg {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+}
+
+/* 메모 영역 */
+.memo-box {
+  background-color: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.memo-header {
+  margin-bottom: 8px;
+}
+
+.memo-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memo-box textarea {
+  width: 100%;
+  height: 85px;
+  background-color: #090d16;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.memo-box textarea:focus {
+  outline: none;
+  border-color: var(--accent-green);
+}
+
+.cal-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 /* === 공통 버튼 스타일 === */
 .btn {
   display: inline-flex;
@@ -774,142 +1195,8 @@ body {
   width: 100%;
 }
 
-/* === 운동 일지 & 히스토리 뷰 === */
-.history-summary-card {
-  background: linear-gradient(145deg, #1e293b, #0f172a);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  margin-bottom: 16px;
-}
-
-.history-summary-card h2 {
-  font-size: 18px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.history-summary-card p {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 14px;
-}
-
-.stats-row {
-  display: flex;
-  gap: 10px;
-}
-
-.stat-item {
-  flex: 1;
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: 12px 8px;
-  border-radius: var(--radius-md);
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.stat-num {
-  display: block;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--accent-green-light);
-}
-
-.stat-lbl {
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.log-input-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  margin-bottom: 20px;
-}
-
-.log-input-card h3 {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.log-input-card textarea {
-  width: 100%;
-  height: 75px;
-  background-color: #0f172a;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: #fff;
-  padding: 10px;
-  font-family: inherit;
-  font-size: 13px;
-  resize: none;
-  margin-bottom: 10px;
-}
-
-.log-input-card textarea:focus {
-  outline: none;
-  border-color: var(--accent-green);
-}
-
-.history-export-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .file-label {
   cursor: pointer;
-}
-
-.history-logs-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.log-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 14px;
-}
-
-.log-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.log-date {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--accent-blue);
-}
-
-.log-routine-badge {
-  background-color: rgba(16, 185, 129, 0.15);
-  color: var(--accent-green-light);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.log-note {
-  font-size: 13px;
-  color: var(--text-main);
-  white-space: pre-wrap;
-  margin-bottom: 8px;
-}
-
-.log-exercises-summary {
-  font-size: 11px;
-  color: var(--text-dim);
 }
 
 /* === 머신 도감 뷰 === */

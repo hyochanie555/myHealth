@@ -1,4 +1,4 @@
-// 하이클래스짐 동천점 머신 도감 데이터베이스
+// 헬스 머신 도감 데이터베이스 (피트니스 센터 주요 머신 33종)
 const BASE_IMG_URL = "https://highclass-dongcheon-guide.sungpark266.chatgpt.site";
 
 const MACHINES_DATA = [

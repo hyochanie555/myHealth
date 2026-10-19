@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>나의 헬스플랜 | 하이클래스짐 동천점 머신 트래커</title>
+  <title>나의 헬스플랜 | 스마트 데일리 운동 트래커</title>
   
   <!-- Favicon & PWA Icons -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏋️‍♂️</text></svg>">
@@ -28,7 +28,7 @@
           <span class="brand-icon">🔥</span>
           <div class="brand-text">
             <h1>나의 헬스플랜</h1>
-            <span class="sub-brand">하이클래스짐 동천점 가이드</span>
+            <span class="sub-brand">스마트 데일리 운동 트래커</span>
           </div>
         </div>
         <div class="header-actions">
@@ -39,10 +39,10 @@
         </div>
       </div>
 
-      <!-- 날짜 및 오늘 루틴 안내 바 -->
+      <!-- 오늘 날짜 및 오늘 루틴 안내 바 -->
       <div class="today-banner">
         <div class="today-date-info">
-          <span class="today-badge" id="todayBadge">오늘 요일</span>
+          <span class="today-badge" id="todayBadge">오늘</span>
           <span class="today-date-str" id="todayDateStr">2026. 10. 19</span>
         </div>
         <div class="today-routine-name" id="todayRoutineName">
@@ -50,48 +50,78 @@
         </div>
       </div>
 
-      <!-- 요일 & 메뉴 네비게이션 탭 -->
-      <nav class="nav-tabs" aria-label="루틴 선택">
-        <button class="nav-tab" data-tab="upper">
-          <span class="tab-day">월·목</span>
-          <span class="tab-title">상체</span>
+      <!-- 월.화.수.목.금.토.일 개별 요일 선택 바 -->
+      <div class="days-nav-bar" aria-label="요일별 플랜 선택">
+        <div class="days-list" id="daysListContainer">
+          <button class="day-btn" data-day="mon">
+            <span class="day-lbl">월</span>
+            <span class="day-part">상체</span>
+            <span class="today-dot hidden" id="dot_mon">오늘</span>
+          </button>
+          <button class="day-btn" data-day="tue">
+            <span class="day-lbl">화</span>
+            <span class="day-part">하체</span>
+            <span class="today-dot hidden" id="dot_tue">오늘</span>
+          </button>
+          <button class="day-btn" data-day="wed">
+            <span class="day-lbl">수</span>
+            <span class="day-part">유산소</span>
+            <span class="today-dot hidden" id="dot_wed">오늘</span>
+          </button>
+          <button class="day-btn" data-day="thu">
+            <span class="day-lbl">목</span>
+            <span class="day-part">상체</span>
+            <span class="today-dot hidden" id="dot_thu">오늘</span>
+          </button>
+          <button class="day-btn" data-day="fri">
+            <span class="day-lbl">금</span>
+            <span class="day-part">하체</span>
+            <span class="today-dot hidden" id="dot_fri">오늘</span>
+          </button>
+          <button class="day-btn" data-day="sat">
+            <span class="day-lbl">토</span>
+            <span class="day-part">유산소</span>
+            <span class="today-dot hidden" id="dot_sat">오늘</span>
+          </button>
+          <button class="day-btn" data-day="sun">
+            <span class="day-lbl">일</span>
+            <span class="day-part">스트레칭</span>
+            <span class="today-dot hidden" id="dot_sun">오늘</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 서브 뷰 네비게이션 탭 (운동 루틴 / 달력 일지 / 머신 도감) -->
+      <nav class="sub-nav-tabs" aria-label="메뉴 선택">
+        <button class="sub-nav-tab active" data-view="routine">
+          <span class="icon">💪</span>
+          <span>운동 루틴</span>
         </button>
-        <button class="nav-tab" data-tab="lower">
-          <span class="tab-day">화·금</span>
-          <span class="tab-title">하체</span>
+        <button class="sub-nav-tab" data-view="calendar">
+          <span class="icon">📅</span>
+          <span>운동 달력 & 메모</span>
         </button>
-        <button class="nav-tab" data-tab="cardio">
-          <span class="tab-day">수·토</span>
-          <span class="tab-title">유산소 50분</span>
-        </button>
-        <button class="nav-tab" data-tab="recovery">
-          <span class="tab-day">일</span>
-          <span class="tab-title">스트레칭</span>
-        </button>
-        <button class="nav-tab" data-tab="history">
-          <span class="tab-day">기록</span>
-          <span class="tab-title">운동일지</span>
-        </button>
-        <button class="nav-tab" data-tab="library">
-          <span class="tab-day">도감</span>
-          <span class="tab-title">머신 33종</span>
+        <button class="sub-nav-tab" data-view="library">
+          <span class="icon">📖</span>
+          <span>머신 도감 33종</span>
         </button>
       </nav>
     </header>
 
     <!-- 메인 컨텐츠 영역 -->
     <main class="main-content">
-      <!-- 1. 루틴 메인 뷰 (상체 / 하체 / 유산소 / 스트레칭) -->
+      <!-- 1. 루틴 메인 뷰 (월~일 선택된 요일의 루틴 표시) -->
       <section id="routineView" class="view-section active">
         <!-- 루틴 요약 및 프로그레스 카드 -->
         <div class="routine-header-card">
           <div class="routine-info-row">
             <div>
-              <h2 id="currentRoutineTitle" class="routine-heading">하체 & 힙 집중 데이</h2>
-              <p id="currentRoutineSubtitle" class="routine-desc">허벅지 · 둔근 · 햄스트링 완전 정복</p>
+              <div class="selected-day-tag" id="currentDayTag">월요일 플랜</div>
+              <h2 id="currentRoutineTitle" class="routine-heading">월요일 : 상체 집중 데이</h2>
+              <p id="currentRoutineSubtitle" class="routine-desc">가슴 · 등 · 어깨 · 팔 · 복근 완성 루틴</p>
             </div>
             <div class="time-est-badge">
-              <span id="currentRoutineTime">약 60분</span>
+              <span id="currentRoutineTime">약 55분</span>
             </div>
           </div>
 
@@ -107,7 +137,7 @@
             <div class="remaining-text" id="remainingCountText">남은 운동: 8개</div>
           </div>
 
-          <!-- 유산소 전용 50분 타이머 컨트롤러 (유산소 탭일 때 노출) -->
+          <!-- 유산소 전용 50분 타이머 컨트롤러 (유산소 요일일 때 노출) -->
           <div id="cardioTimerBox" class="cardio-timer-box hidden">
             <div class="cardio-timer-display" id="cardioTimerDisplay">50:00</div>
             <div class="cardio-timer-actions">
@@ -127,7 +157,7 @@
             <span class="count-pill" id="activeExerciseCount">8</span>
           </h3>
           <button id="btnResetToday" class="btn-text-sm" title="오늘의 완료 상태 초기화">
-            오늘 운동 다시하기 ↺
+            운동 다시하기 ↺
           </button>
         </div>
 
@@ -140,10 +170,10 @@
         <div id="allDoneCelebration" class="celebration-card hidden">
           <div class="celebration-icon">🎉</div>
           <h3>오늘의 모든 플랜 완료!</h3>
-          <p>오늘도 목표를 달성하셨습니다! 근육이 기분 좋게 성장하고 있습니다. 시원하게 단백질 챙겨 드세요! 💪</p>
+          <p>오늘도 목표를 완벽하게 달성하셨습니다! 근육이 기분 좋게 성장하고 있습니다. 시원하게 단백질 챙겨 드세요! 💪</p>
           <div class="celebration-actions">
             <button id="btnSaveHistoryFromDone" class="btn btn-primary">
-              운동 일지에 저장하기 📝
+              운동 달력에 일지/메모 남기기 📝
             </button>
           </div>
         </div>
@@ -160,55 +190,90 @@
         </div>
       </section>
 
-      <!-- 2. 운동 일지 & 히스토리 뷰 -->
-      <section id="historyView" class="view-section hidden">
-        <div class="history-summary-card">
-          <h2>📅 나의 운동 기록 & 출석</h2>
-          <p>하루하루 쌓여가는 나의 건강과 근육의 기록입니다.</p>
-          <div class="stats-row">
-            <div class="stat-item">
-              <span class="stat-num" id="totalWorkoutDays">0</span>
-              <span class="stat-lbl">총 운동 일수</span>
+      <!-- 2. 운동 일지 & 달력 뷰 (Calendar & Diary with Memo) -->
+      <section id="calendarView" class="view-section hidden">
+        <!-- 상단 달력 컨트롤러 (월 이동) -->
+        <div class="calendar-card">
+          <div class="calendar-nav-bar">
+            <div class="cal-title-wrap">
+              <h2 id="calendarMonthTitle" class="calendar-month-heading">2026년 10월</h2>
+              <button id="btnCalGoToday" class="btn-cal-today">오늘</button>
             </div>
-            <div class="stat-item">
-              <span class="stat-num" id="thisMonthWorkoutDays">0</span>
-              <span class="stat-lbl">이번 달 출석</span>
+            <div class="cal-nav-buttons">
+              <button id="btnPrevMonth" class="btn-cal-arrow" title="이전 달">◀</button>
+              <button id="btnNextMonth" class="btn-cal-arrow" title="다음 달">▶</button>
             </div>
-            <div class="stat-item">
-              <span class="stat-num" id="recentStreak">0</span>
-              <span class="stat-lbl">연속 출석(일)</span>
-            </div>
+          </div>
+
+          <!-- 요일 헤더 -->
+          <div class="cal-weekdays-grid">
+            <span class="cal-th sun">일</span>
+            <span class="cal-th">월</span>
+            <span class="cal-th">화</span>
+            <span class="cal-th">수</span>
+            <span class="cal-th">목</span>
+            <span class="cal-th">금</span>
+            <span class="cal-th sat">토</span>
+          </div>
+
+          <!-- 날짜 그리드 (JS로 렌더링) -->
+          <div id="calendarDaysGrid" class="cal-days-grid">
+            <!-- 동적 날짜 셀 -->
+          </div>
+
+          <!-- 범례 가이드 -->
+          <div class="cal-legend">
+            <span class="legend-item"><i class="legend-badge done-all"></i> 모두 완료</span>
+            <span class="legend-item"><i class="legend-badge done-part"></i> 일부 완료</span>
+            <span class="legend-item"><i class="legend-badge memo">📝</i> 메모 있음</span>
           </div>
         </div>
 
-        <!-- 오늘 운동 직접 기록하기 -->
-        <div class="log-input-card">
-          <h3>오늘의 운동 한 줄 메모</h3>
-          <textarea id="todayWorkoutNote" placeholder="예: 레그프레스 120kg 4세트 달성! 무릎 통증 전혀 없이 펌핑감 최고였음."></textarea>
-          <button id="btnSaveTodayLog" class="btn btn-primary btn-block">오늘 기록 저장하기 💾</button>
-        </div>
+        <!-- 선택한 날짜 상세 및 메모 작성 패널 -->
+        <div class="date-detail-panel" id="dateDetailPanel">
+          <div class="panel-header">
+            <div>
+              <span class="panel-date-tag" id="panelDateTag">선택된 날짜</span>
+              <h3 id="panelFullDateStr" class="panel-date-title">2026년 10월 19일 (월요일)</h3>
+            </div>
+            <div id="panelStatusBadge" class="status-pill status-none">기록 없음</div>
+          </div>
 
-        <!-- 저장된 과거 일지 목록 -->
-        <div class="history-list-box">
-          <div class="section-title-bar">
-            <h3>최근 운동 일지</h3>
-            <div class="history-export-actions">
-              <button id="btnExportData" class="btn-text-sm">데이터 백업(JSON)</button>
-              <label for="importFileInput" class="btn-text-sm file-label">복원</label>
-              <input type="file" id="importFileInput" accept=".json" class="hidden" />
+          <!-- 그 날의 운동 요약 -->
+          <div class="panel-workout-summary" id="panelWorkoutSummary">
+            <div class="empty-workout-msg">이 날짜에 기록된 운동 정보가 없습니다.</div>
+          </div>
+
+          <!-- 별도 메모 작성 및 수정 영역 -->
+          <div class="memo-box">
+            <div class="memo-header">
+              <label for="dateMemoInput" class="memo-label">
+                <span class="icon">📝</span>
+                <span>이 날의 별도 운동 메모 (컨디션, 체중, 특이사항)</span>
+              </label>
+            </div>
+            <textarea id="dateMemoInput" placeholder="예: 체중 72.5kg, 레그프레스 120kg 4세트 달성! 무릎 통증 전혀 없이 펌핑감 아주 좋았음."></textarea>
+            <div class="memo-actions">
+              <button id="btnSaveDateMemo" class="btn btn-primary btn-block">
+                이 날짜 메모 저장하기 💾
+              </button>
             </div>
           </div>
-          <div id="historyLogsList" class="history-logs-container">
-            <!-- JS로 과거 기록 렌더링 -->
+
+          <!-- 백업 및 복원 -->
+          <div class="cal-footer-actions">
+            <button id="btnExportData" class="btn-text-sm">달력 데이터 백업(JSON)</button>
+            <label for="importFileInput" class="btn-text-sm file-label">데이터 복원</label>
+            <input type="file" id="importFileInput" accept=".json" class="hidden" />
           </div>
         </div>
       </section>
 
-      <!-- 3. 하이클래스짐 동천점 머신 도감 (33종) 뷰 -->
+      <!-- 3. 머신 도감 (33종) 뷰 -->
       <section id="libraryView" class="view-section hidden">
         <div class="library-header-card">
-          <h2>🏢 하이클래스짐 동천점 머신 도감</h2>
-          <p>센터에 실제 비치된 33개 최고급 머신의 사진과 사용법을 언제든 확인하세요.</p>
+          <h2>헬스 머신 가이드 & 도감 (33종)</h2>
+          <p>센터에 비치된 주요 머신들의 실제 사진과 사용법을 언제든 확인하세요.</p>
           
           <!-- 검색창 -->
           <div class="search-input-box">
@@ -259,7 +324,7 @@
       <div class="modal-card">
         <button id="btnCloseModal" class="btn-close-modal" aria-label="닫기">✕</button>
         <div class="modal-image-wrap">
-          <img id="modalMachineImage" src="" alt="머신 사진" onerror="this.src='https://placehold.co/600x400/1e293b/ffffff?text=머신+사진';">
+          <img id="modalMachineImage" src="" alt="머신 사진" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80';">
           <span id="modalBrandBadge" class="modal-brand-badge">NEWTECH</span>
         </div>
         <div class="modal-body">
@@ -290,9 +355,8 @@
       </div>
     </div>
 
-    <!-- 하이클래스짐 출처 푸터 -->
+    <!-- 푸터 -->
     <footer class="app-footer">
-      <p>🏋️‍♂️ 하이클래스짐 동천점 공식 가이드 연동</p>
       <p class="copyright">나의 헬스플랜 · 매일 건강하고 단단해지는 나의 루틴</p>
     </footer>
   </div>
