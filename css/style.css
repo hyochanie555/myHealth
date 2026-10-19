@@ -647,6 +647,17 @@ body {
   border-right: 1px solid var(--border-color);
 }
 
+.btn-card-action.btn-youtube {
+  border-right: 1px solid var(--border-color);
+  color: #f87171;
+  text-decoration: none;
+}
+
+.btn-card-action.btn-youtube:hover {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ff6b6b;
+}
+
 .btn-card-action.btn-rest {
   border-right: 1px solid var(--border-color);
 }
@@ -656,6 +667,33 @@ body {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.15));
   color: var(--accent-green-light);
   font-weight: 700;
+}
+
+.btn-youtube-modal {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff !important;
+  text-decoration: none;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-youtube-modal:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+}
+
+.yt-play-icon {
+  display: inline-block;
+  font-size: 11px;
+  background-color: #fff;
+  color: #dc2626;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  border-radius: 50%;
+  text-align: center;
+  font-weight: 900;
+  margin-right: 4px;
 }
 
 .btn-card-action.btn-complete:hover {

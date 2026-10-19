@@ -574,7 +574,10 @@ function createExerciseCardElement(ex) {
   const imgUrl = ex.customImage || (machine ? machine.image : "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80");
   const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : "루틴");
 
-  card.innerHTML = `
+    const ytQuery = ex.youtubeQuery || (machine ? machine.name + " 운동 사용법" : ex.name + " 운동");
+    const ytUrl = makeYoutubeSearchUrl(ytQuery);
+
+    card.innerHTML = `
     <div class="card-top">
       <div class="card-thumb-wrap" title="사진을 누르면 상세 사용법이 열립니다">
         <img src="${imgUrl}" alt="${ex.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80';">
@@ -600,9 +603,10 @@ function createExerciseCardElement(ex) {
       <span>${ex.tip}</span>
     </div>
     <div class="card-actions">
-      <button class="btn-card-action btn-guide" data-action="guide">📖 사용법</button>
+      <button class="btn-card-action btn-guide" data-action="guide">📖 설명</button>
+      <a class="btn-card-action btn-youtube" href="${ytUrl}" target="_blank" rel="noopener noreferrer" title="유튜브에서 한국어 인기 영상 보기">▶ 영상</a>
       ${ex.restSec > 0 ? `<button class="btn-card-action btn-rest" data-action="rest" data-sec="${ex.restSec}">⏱️ ${ex.restSec}초</button>` : ''}
-      <button class="btn-card-action btn-complete" data-action="complete">오늘 완료 ✔</button>
+      <button class="btn-card-action btn-complete" data-action="complete">완료 ✔</button>
     </div>
   `;
 
@@ -858,6 +862,12 @@ function openMachineModal(machine) {
   document.getElementById("modalFormTip").textContent = machine.formTip || "반동 없이 목표 근육의 수축과 이완을 느끼며 진행하세요.";
   document.getElementById("modalCaution").textContent = machine.caution || "관절 통증이 느껴지면 즉시 중단하고 자세를 점검하세요.";
 
+  const ytBtn = document.getElementById("modalYoutubeLink");
+  if (ytBtn) {
+    const ytQuery = machine.name + " 운동 사용법 자세";
+    ytBtn.href = makeYoutubeSearchUrl(ytQuery);
+  }
+
   modal.classList.remove("hidden");
 }
 
@@ -874,6 +884,12 @@ function openCustomExerciseModal(ex, imgUrl) {
   document.getElementById("modalSetupTip").textContent = "안전한 자세와 관절 가동 범위를 먼저 점검합니다.";
   document.getElementById("modalFormTip").textContent = ex.tip;
   document.getElementById("modalCaution").textContent = "정확한 궤적으로 무리하지 않는 중량/강도로 진행하세요.";
+
+  const ytBtn = document.getElementById("modalYoutubeLink");
+  if (ytBtn) {
+    const ytQuery = ex.youtubeQuery || (ex.name + " 운동 자세");
+    ytBtn.href = makeYoutubeSearchUrl(ytQuery);
+  }
 
   modal.classList.remove("hidden");
 }
