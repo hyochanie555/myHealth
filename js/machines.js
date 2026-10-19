@@ -311,7 +311,7 @@ const MACHINES_DATA = [
   },
   {
     id: "m26",
-    name: "뉴텍 힙 어브덕션 / 어덕션 (인앤아웃 타이)",
+    name: "뉴텍 힙 어덕션 / 어브덕션",
     brand: "NEWTECH",
     category: "legs",
     categoryLabel: "하체/힙",

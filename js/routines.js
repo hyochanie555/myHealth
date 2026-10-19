@@ -182,7 +182,7 @@ const TEMPLATE_LOWER = [
   {
     id: "l5",
     order: "5",
-    name: "뉴텍 인앤아웃 타이 (or 링크 아웃타이)",
+    name: "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
     alternative: "렉스코 링크 아웃타이",
     machineId: "m26",
     target: "안쪽 허벅지 & 엉덩이 바깥 (중둔근)",

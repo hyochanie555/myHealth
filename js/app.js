@@ -318,12 +318,19 @@ function bindEvents() {
     });
   }
 
-  // 7. 모달 닫기
+  // 7. 모달 닫기 및 이미지 줌
   const btnCloseModal = document.getElementById("btnCloseModal");
   const btnModalConfirm = document.getElementById("btnModalConfirm");
   const modalOverlay = document.getElementById("machineDetailModal");
+  const modalMachineImage = document.getElementById("modalMachineImage");
+
   if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
   if (btnModalConfirm) btnModalConfirm.addEventListener("click", closeModal);
+  if (modalMachineImage) {
+    modalMachineImage.addEventListener("click", () => {
+      modalMachineImage.classList.toggle("zoomed");
+    });
+  }
   if (modalOverlay) {
     modalOverlay.addEventListener("click", (e) => {
       if (e.target === modalOverlay) closeModal();
@@ -874,6 +881,8 @@ function openCustomExerciseModal(ex, imgUrl) {
 function closeModal() {
   const modal = document.getElementById("machineDetailModal");
   if (modal) modal.classList.add("hidden");
+  const modalImg = document.getElementById("modalMachineImage");
+  if (modalImg) modalImg.classList.remove("zoomed");
 }
 
 // === 4. 휴식 타이머 로직 ===
