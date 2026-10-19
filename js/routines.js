@@ -706,3 +706,172 @@ function getRoutineKeyForDay(dayNumber) {
   };
   return map[dayNumber] || "mon";
 }
+
+// 부위 판별용 전체 운동 사전
+const EXERCISE_BODY_PARTS = {
+  // 하체
+  "뉴텍 레그 익스텐션": "하체",
+  "뉴텍 레그 프레스 (or 시티드 레그 프레스)": "하체",
+  "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)": "하체",
+  "뉴텍 라잉 레그 컬": "하체",
+  "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)": "하체",
+  "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)": "하체",
+  "백익스텐션 (허리 기립근 & 둔근)": "하체",
+  "고관절 스트레칭 & 맨몸 스쿼트": "하체",
+
+  // 상체
+  "뉴텍 시티드 체스트 프레스": "상체",
+  "해머 호리존탈 체스트 프레스": "상체",
+  "렉스코 랫풀다운": "상체",
+  "뉴텍 토쳐 프론트 풀다운": "상체",
+  "뉴텍 펙덱플라이 (핀머신)": "상체",
+  "뉴텍 펙덱플라이 (플레이트)": "상체",
+  "뉴텍 시티드로우 (핀머신)": "상체",
+  "해머 디와이 로우 / 롱풀": "상체",
+  "뉴텍 숄더프레스 (핀머신)": "상체",
+  "뉴텍 사이드 레터럴 레이즈 (핀머신)": "상체",
+  "뉴텍 시티드 딥 (핀머신)": "상체",
+  "뉴텍 암컬 (핀머신)": "상체",
+  "어깨 회전근개 & 동적 상체 스트레칭": "상체",
+
+  // 복근
+  "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)": "복근",
+  "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)": "복근",
+  "원암 덤벨 사이드 벤드 (덤벨존 활용)": "복근",
+
+  // 유산소
+  "가벼운 걷기 & 전신 관절 풀기": "유산소",
+  "트레드밀 인클라인 경사 걷기 (or 인터벌 러닝)": "유산소",
+  "스텝밀 (천국의 계단) or 실내 사이클": "유산소",
+  "쿨다운 워킹 & 심박수 안정화": "유산소",
+
+  // 스트레칭
+  "폼롤러 등 & 흉추 모빌리티 롤링": "스트레칭",
+  "폼롤러 허벅지 앞/옆(장경인대) 이완": "스트레칭",
+  "폼롤러 둔근(이상근) & 햄스트링 마사지": "스트레칭",
+  "고관절 비둘기 자세 & 장요근 런지 스트레칭": "스트레칭",
+  "목/어깨 승모근 & 가슴 전면 이완 스트레칭": "스트레칭"
+};
+
+// 완료된 운동 목록에서 주 부위를 판별하고 달력 뱃지 텍스트를 만들어주는 지능형 분석 함수
+function analyzeWorkoutParts(completedItemNames) {
+  if (!completedItemNames || completedItemNames.length === 0) {
+    return { mainPart: "없음", badgeText: "기록 없음", badgeClass: "none", counts: { lower: 0, upper: 0, cardio: 0, recovery: 0, core: 0, total: 0 } };
+  }
+
+  let lower = 0;
+  let upper = 0;
+  let cardio = 0;
+  let recovery = 0;
+  let core = 0;
+
+  completedItemNames.forEach(name => {
+    const part = EXERCISE_BODY_PARTS[name] || "";
+    if (part === "하체") lower++;
+    else if (part === "상체") upper++;
+    else if (part === "유산소") cardio++;
+    else if (part === "스트레칭") recovery++;
+    else if (part === "복근") core++;
+    else {
+      if (name.includes("레그") || name.includes("스쿼트") || name.includes("타이") || name.includes("익스텐션") || name.includes("힙")) lower++;
+      else if (name.includes("체스트") || name.includes("풀다운") || name.includes("플라이") || name.includes("로우") || name.includes("숄더") || name.includes("딥") || name.includes("컬")) upper++;
+      else if (name.includes("트레드밀") || name.includes("스텝밀") || name.includes("사이클") || name.includes("유산소")) cardio++;
+      else if (name.includes("스트레칭") || name.includes("폼롤러")) recovery++;
+      else if (name.includes("니 레이즈") || name.includes("사이드 벤드") || name.includes("복근")) core++;
+      else upper++;
+    }
+  });
+
+  const total = completedItemNames.length;
+  let mainPart = "상체";
+  let maxCount = upper;
+  let badgeClass = "badge-upper";
+
+  // 하체 판별 (복근을 하체하는 날 함께 하므로 하체가 1개 이상이고 최다인 경우)
+  if (lower >= maxCount && lower > 0) {
+    mainPart = "하체";
+    maxCount = lower;
+    badgeClass = "badge-lower";
+  }
+  if (cardio > maxCount) {
+    mainPart = "유산소";
+    maxCount = cardio;
+    badgeClass = "badge-cardio";
+  }
+  if (recovery > maxCount) {
+    mainPart = "스트레칭";
+    maxCount = recovery;
+    badgeClass = "badge-recovery";
+  }
+
+  // 상체와 하체가 거의 비등한 경우 전신
+  if (Math.abs(upper - lower) <= 1 && upper >= 2 && lower >= 2) {
+    mainPart = "전신";
+    badgeClass = "badge-fullbody";
+  }
+
+  // 뱃지 텍스트 결정 (예: "하체 6개 완료", "✔ 하체 완료")
+  let badgeText = `${mainPart} ${total}개`;
+  if ((mainPart === "하체" && lower >= 6) || (mainPart === "상체" && upper >= 6) || (mainPart === "유산소" && cardio >= 3)) {
+    badgeText = `✔ ${mainPart} 완료`;
+  }
+
+  return { mainPart, badgeText, badgeClass, counts: { lower, upper, cardio, recovery, core, total } };
+}
+
+// 과거 날짜 편집기에서 선택할 수 있는 부위별 마스터 운동 목록
+const ALL_EDITABLE_EXERCISES = [
+  {
+    category: "하체 & 힙",
+    items: [
+      "뉴텍 레그 익스텐션",
+      "뉴텍 레그 프레스 (or 시티드 레그 프레스)",
+      "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",
+      "뉴텍 라잉 레그 컬",
+      "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
+      "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
+      "백익스텐션 (허리 기립근 & 둔근)",
+      "고관절 스트레칭 & 맨몸 스쿼트"
+    ]
+  },
+  {
+    category: "상체",
+    items: [
+      "뉴텍 시티드 체스트 프레스",
+      "렉스코 랫풀다운",
+      "뉴텍 펙덱플라이 (핀머신)",
+      "뉴텍 시티드로우 (핀머신)",
+      "뉴텍 숄더프레스 (핀머신)",
+      "뉴텍 사이드 레터럴 레이즈 (핀머신)",
+      "뉴텍 시티드 딥 (핀머신)",
+      "뉴텍 암컬 (핀머신)",
+      "어깨 회전근개 & 동적 상체 스트레칭"
+    ]
+  },
+  {
+    category: "복근 & 코어",
+    items: [
+      "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",
+      "원암 덤벨 사이드 벤드 (덤벨존 활용)"
+    ]
+  },
+  {
+    category: "유산소",
+    items: [
+      "트레드밀 인클라인 경사 걷기 (or 인터벌 러닝)",
+      "스텝밀 (천국의 계단) or 실내 사이클",
+      "가벼운 걷기 & 전신 관절 풀기",
+      "쿨다운 워킹 & 심박수 안정화"
+    ]
+  },
+  {
+    category: "스트레칭",
+    items: [
+      "폼롤러 등 & 흉추 모빌리티 롤링",
+      "폼롤러 허벅지 앞/옆(장경인대) 이완",
+      "폼롤러 둔근(이상근) & 햄스트링 마사지",
+      "고관절 비둘기 자세 & 장요근 런지 스트레칭",
+      "목/어깨 승모근 & 가슴 전면 이완 스트레칭"
+    ]
+  }
+];

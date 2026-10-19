@@ -196,53 +196,69 @@ function saveCalendarData() {
   localStorage.setItem("myhealth_calendar_data", JSON.stringify(AppState.calendarData));
 }
 
-// 오늘 수행한 운동 진행률을 달력 데이터 객체에 실시간 기록
+// 전체 루틴 운동 ID -> 운동 이름 매핑 생성
+function getAllExercisesIdToNameMap() {
+  const map = {};
+  if (typeof WEEKLY_ROUTINES !== 'undefined') {
+    Object.values(WEEKLY_ROUTINES).forEach(routine => {
+      routine.exercises.forEach(ex => {
+        map[ex.id] = ex.name;
+      });
+    });
+  }
+  return map;
+}
+
+// 오늘 수행한 운동 진행률을 달력 데이터 객체에 실시간 지능형 누적 기록
 function syncTodayCalendarRecord() {
-  const curRoutine = WEEKLY_ROUTINES[AppState.selectedDay];
-  if (!curRoutine) return;
-
-  const total = curRoutine.exercises.length;
-  let done = 0;
-  const completedNames = [];
-
-  curRoutine.exercises.forEach(ex => {
-    if (AppState.completedExerciseIds.has(ex.id)) {
-      done++;
-      completedNames.push(ex.name);
-    }
-  });
-
   const todayStr = AppState.todayDateStr;
   const prevRecord = AppState.calendarData[todayStr] || {};
 
-  if (done > 0) {
-    let statusText = `${done}/${total} 완료`;
-    if (done === total) {
-      statusText = "✔ 모두 완료";
+  // 오늘 완료된 모든 운동 ID로부터 운동 이름 수집 (중복 제거)
+  const idMap = getAllExercisesIdToNameMap();
+  const completedNamesSet = new Set();
+
+  AppState.completedExerciseIds.forEach(id => {
+    if (idMap[id]) {
+      completedNamesSet.add(idMap[id]);
     }
+  });
+
+  const completedNames = Array.from(completedNamesSet);
+
+  if (completedNames.length > 0) {
+    const analysis = typeof analyzeWorkoutParts === 'function'
+      ? analyzeWorkoutParts(completedNames)
+      : { mainPart: "운동", badgeText: `${completedNames.length}개 완료`, badgeClass: "badge-upper", counts: { total: completedNames.length } };
 
     AppState.calendarData[todayStr] = {
       ...prevRecord,
       date: todayStr,
-      dayKey: AppState.selectedDay,
+      dayKey: AppState.todayDayKey,
       dayKorean: AppState.todayDayKorean,
-      routineTitle: curRoutine.title,
-      doneCount: done,
-      totalCount: total,
-      statusText: statusText,
+      routineTitle: `${AppState.todayDayKorean}요일 운동 기록`,
       completedItems: completedNames,
+      mainPart: analysis.mainPart,
+      statusText: analysis.badgeText,
+      badgeClass: analysis.badgeClass,
+      doneCount: completedNames.length,
+      totalCount: completedNames.length,
+      counts: analysis.counts,
       updatedAt: Date.now()
     };
   } else if (!prevRecord.memo) {
-    // 완료한 것도 없고 메모도 없으면 삭제
+    // 운동도 없고 메모도 없으면 삭제
     delete AppState.calendarData[todayStr];
   } else {
-    // 메모만 있는 경우
+    // 메모만 남아있는 경우
     AppState.calendarData[todayStr] = {
       ...prevRecord,
+      completedItems: [],
+      mainPart: "없음",
+      statusText: "",
+      badgeClass: "none",
       doneCount: 0,
-      totalCount: total,
-      statusText: "0 완료"
+      totalCount: 0
     };
   }
 
@@ -383,7 +399,25 @@ function bindEvents() {
     });
   }
 
-  // 10. 선택 날짜 별도 메모 저장
+  // 10. 과거/원하는 날짜 운동 기록 편집 폼 토글
+  const btnToggleEditWorkout = document.getElementById("btnToggleEditWorkout");
+  const workoutEditorBox = document.getElementById("workoutEditorBox");
+  if (btnToggleEditWorkout && workoutEditorBox) {
+    btnToggleEditWorkout.addEventListener("click", () => {
+      const isHidden = workoutEditorBox.classList.toggle("hidden");
+      btnToggleEditWorkout.textContent = isHidden ? "✏️ 운동 기록 수정/추가" : "운동 목록 닫기 ▲";
+    });
+  }
+
+  // 11. 퀵 프리셋 버튼 클릭 (+ 하체, + 상체, + 유산소, 전체 해제)
+  document.querySelectorAll(".btn-preset-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const preset = btn.getAttribute("data-preset");
+      applyWorkoutPreset(preset);
+    });
+  });
+
+  // 12. 선택 날짜 운동 기록 및 메모 저장
   const btnSaveDateMemo = document.getElementById("btnSaveDateMemo");
   if (btnSaveDateMemo) {
     btnSaveDateMemo.addEventListener("click", saveDateMemo);
@@ -401,7 +435,7 @@ function bindEvents() {
     });
   }
 
-  // 11. 데이터 백업 & 복원
+  // 13. 데이터 백업 & 복원
   const btnExportData = document.getElementById("btnExportData");
   if (btnExportData) btnExportData.addEventListener("click", exportDataAsJson);
 
@@ -410,26 +444,6 @@ function bindEvents() {
     importFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) importDataFromJson(file);
-    });
-  }
-
-  // 12. 머신 도감 검색 & 필터
-  const machineSearchInput = document.getElementById("machineSearchInput");
-  if (machineSearchInput) {
-    machineSearchInput.addEventListener("input", (e) => {
-      filterMachinesLibrary(e.target.value.trim());
-    });
-  }
-
-  const categoryFilters = document.getElementById("categoryFilters");
-  if (categoryFilters) {
-    categoryFilters.addEventListener("click", (e) => {
-      const pill = e.target.closest(".cat-pill");
-      if (!pill) return;
-      categoryFilters.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
-      pill.classList.add("active");
-      const cat = pill.getAttribute("data-cat");
-      filterMachinesLibrary(machineSearchInput ? machineSearchInput.value.trim() : "", cat);
     });
   }
 }
@@ -447,7 +461,7 @@ function selectDay(dayKey) {
   switchView("routine");
 }
 
-// 서브 뷰 전환 ("routine" | "calendar" | "library")
+// 서브 뷰 전환 ("routine" | "calendar")
 function switchView(viewName) {
   AppState.currentView = viewName;
 
@@ -458,21 +472,16 @@ function switchView(viewName) {
 
   const routineView = document.getElementById("routineView");
   const calendarView = document.getElementById("calendarView");
-  const libraryView = document.getElementById("libraryView");
 
-  routineView.classList.remove("active");
-  calendarView.classList.remove("active");
-  libraryView.classList.remove("active");
+  if (routineView) routineView.classList.remove("active");
+  if (calendarView) calendarView.classList.remove("active");
 
   if (viewName === "calendar") {
-    calendarView.classList.add("active");
+    if (calendarView) calendarView.classList.add("active");
     renderCalendar();
     renderSelectedDateDetail();
-  } else if (viewName === "library") {
-    libraryView.classList.add("active");
-    renderLibraryView();
   } else {
-    routineView.classList.add("active");
+    if (routineView) routineView.classList.add("active");
     renderRoutineView();
   }
 }
@@ -689,6 +698,36 @@ function renderCalendar() {
     monthTitle.textContent = `${year}년 ${month + 1}월`;
   }
 
+  // 이번 달 통계 계산 (01일부터 말일까지)
+  let monthDoneDays = 0;
+  let monthAllDoneDays = 0;
+  let totalMemos = 0;
+
+  const prefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+  Object.keys(AppState.calendarData).forEach(dateKey => {
+    const rec = AppState.calendarData[dateKey];
+    if (rec.memo && rec.memo.trim().length > 0) {
+      totalMemos++;
+    }
+
+    if (dateKey.startsWith(prefix)) {
+      if (rec.completedItems && rec.completedItems.length > 0) {
+        monthDoneDays++;
+        if (rec.statusText && (rec.statusText.includes("✔") || rec.completedItems.length >= 6)) {
+          monthAllDoneDays++;
+        }
+      }
+    }
+  });
+
+  const calMonthDoneDays = document.getElementById("calMonthDoneDays");
+  const calMonthAllDoneDays = document.getElementById("calMonthAllDoneDays");
+  const calTotalMemoCount = document.getElementById("calTotalMemoCount");
+
+  if (calMonthDoneDays) calMonthDoneDays.textContent = `${monthDoneDays}일`;
+  if (calMonthAllDoneDays) calMonthAllDoneDays.textContent = `${monthAllDoneDays}일`;
+  if (calTotalMemoCount) calTotalMemoCount.textContent = `${totalMemos}개`;
+
   const grid = document.getElementById("calendarDaysGrid");
   if (!grid) return;
   grid.innerHTML = "";
@@ -727,9 +766,8 @@ function renderCalendar() {
 
     if (record) {
       if (record.statusText) {
-        const isAllDone = record.doneCount > 0 && record.doneCount === record.totalCount;
-        const badgeClass = isAllDone ? "all-done" : "part-done";
-        badgeHtml = `<div class="cal-status-badge ${badgeClass}">${record.statusText}</div>`;
+        const badgeClass = record.badgeClass || (record.doneCount > 0 && record.doneCount === record.totalCount ? "all-done" : "part-done");
+        badgeHtml = `<div class="cal-status-badge ${badgeClass}">${escapeHtml(record.statusText)}</div>`;
       }
       if (record.memo && record.memo.trim().length > 0) {
         memoIcon = "📝";
@@ -777,34 +815,22 @@ function renderSelectedDateDetail() {
 
   const record = AppState.calendarData[targetDateStr];
 
-  if (record) {
+  if (record && record.completedItems && record.completedItems.length > 0) {
     // 상태 뱃지
     if (panelStatusBadge) {
-      panelStatusBadge.className = "status-pill";
-      if (record.doneCount > 0 && record.doneCount === record.totalCount) {
-        panelStatusBadge.classList.add("status-all-done");
-        panelStatusBadge.textContent = "✔ 모두 완료";
-      } else if (record.doneCount > 0) {
-        panelStatusBadge.classList.add("status-part-done");
-        panelStatusBadge.textContent = `${record.doneCount}/${record.totalCount} 완료`;
-      } else {
-        panelStatusBadge.classList.add("status-none");
-        panelStatusBadge.textContent = "운동 없음";
-      }
+      panelStatusBadge.className = `status-pill ${record.badgeClass || "status-part-done"}`;
+      panelStatusBadge.textContent = record.statusText || `${record.completedItems.length}개 완료`;
     }
 
     // 운동 목록 칩
     if (panelWorkoutSummary) {
-      let itemsHtml = "";
-      if (record.completedItems && record.completedItems.length > 0) {
-        itemsHtml = `
-          <div style="font-weight:700; margin-bottom:6px; color:#fff;">${record.routineTitle || '운동 루틴'}</div>
-          <div>${record.completedItems.map(item => `<span class="workout-item-chip">${escapeHtml(item)}</span>`).join('')}</div>
-        `;
-      } else {
-        itemsHtml = `<div class="empty-workout-msg">완료한 운동 목록이 없습니다.</div>`;
-      }
-      panelWorkoutSummary.innerHTML = itemsHtml;
+      const mainPartText = record.mainPart ? `[${record.mainPart}] ` : "";
+      panelWorkoutSummary.innerHTML = `
+        <div style="font-weight:700; margin-bottom:6px; color:#fff; display:flex; align-items:center; gap:6px;">
+          <span>${mainPartText}총 ${record.completedItems.length}개 운동 완료</span>
+        </div>
+        <div>${record.completedItems.map(item => `<span class="workout-item-chip">${escapeHtml(item)}</span>`).join('')}</div>
+      `;
     }
 
     // 메모 값 로드
@@ -812,36 +838,175 @@ function renderSelectedDateDetail() {
       dateMemoInput.value = record.memo || "";
     }
   } else {
-    // 기록이 없는 날짜
+    // 기록이 없거나 메모만 있는 경우
     if (panelStatusBadge) {
       panelStatusBadge.className = "status-pill status-none";
-      panelStatusBadge.textContent = "기록 없음";
+      panelStatusBadge.textContent = (record && record.memo) ? "메모만 있음" : "기록 없음";
     }
     if (panelWorkoutSummary) {
-      panelWorkoutSummary.innerHTML = `<div class="empty-workout-msg">이 날짜에 기록된 운동 정보가 없습니다.</div>`;
+      panelWorkoutSummary.innerHTML = `<div class="empty-workout-msg">이 날짜에 기록된 운동 정보가 없습니다. (위 '✏️ 운동 기록 수정/추가'로 추가 가능)</div>`;
     }
     if (dateMemoInput) {
-      dateMemoInput.value = "";
+      dateMemoInput.value = (record && record.memo) ? record.memo : "";
     }
   }
+
+  // 운동 편집기 체크박스 목록 갱신
+  renderWorkoutEditor(targetDateStr);
 }
 
-// 선택된 날짜에 별도 메모 저장
+// 과거 날짜 운동 종목 체크박스 편집기 렌더링
+function renderWorkoutEditor(targetDateStr) {
+  const container = document.getElementById("editableExercisesList");
+  if (!container || typeof ALL_EDITABLE_EXERCISES === "undefined") return;
+
+  const record = AppState.calendarData[targetDateStr] || {};
+  const completedSet = new Set(record.completedItems || []);
+
+  container.innerHTML = "";
+  ALL_EDITABLE_EXERCISES.forEach((group, gIdx) => {
+    const groupEl = document.createElement("div");
+    groupEl.className = "edit-cat-group";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "edit-cat-title";
+    titleEl.innerHTML = `<span>📌 ${group.category}</span>`;
+    groupEl.appendChild(titleEl);
+
+    const gridEl = document.createElement("div");
+    gridEl.className = "edit-checkbox-grid";
+
+    group.items.forEach((itemName, iIdx) => {
+      const checkId = `edit_chk_${gIdx}_${iIdx}`;
+      const isChecked = completedSet.has(itemName);
+
+      const label = document.createElement("label");
+      label.className = "edit-check-label";
+      label.htmlFor = checkId;
+
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.id = checkId;
+      input.className = "workout-edit-chk";
+      input.value = itemName;
+      input.checked = isChecked;
+      input.setAttribute("data-category", group.category);
+
+      const span = document.createElement("span");
+      span.textContent = itemName;
+
+      label.appendChild(input);
+      label.appendChild(span);
+      gridEl.appendChild(label);
+    });
+
+    groupEl.appendChild(gridEl);
+    container.appendChild(groupEl);
+  });
+}
+
+// 퀵 프리셋 버튼 핸들러 (하체, 상체, 유산소, 전체해제)
+function applyWorkoutPreset(preset) {
+  const checkboxes = document.querySelectorAll(".workout-edit-chk");
+  if (!checkboxes.length) return;
+
+  if (preset === "clear") {
+    checkboxes.forEach(cb => cb.checked = false);
+    return;
+  }
+
+  checkboxes.forEach(cb => {
+    const cat = cb.getAttribute("data-category") || "";
+    if (preset === "lower" && cat.includes("하체")) {
+      cb.checked = true;
+    } else if (preset === "upper" && cat.includes("상체")) {
+      cb.checked = true;
+    } else if (preset === "cardio" && cat.includes("유산소")) {
+      cb.checked = true;
+    }
+  });
+}
+
+// 선택된 날짜에 운동 목록 & 메모 통합 저장
 function saveDateMemo() {
   const targetDateStr = AppState.calSelectedDate || AppState.todayDateStr;
   const memoInput = document.getElementById("dateMemoInput");
   const memoText = memoInput ? memoInput.value.trim() : "";
 
+  // 현재 체크된 모든 운동 수집
+  const checkedBoxes = document.querySelectorAll(".workout-edit-chk:checked");
+  const selectedItems = Array.from(checkedBoxes).map(cb => cb.value);
+
   const prevRecord = AppState.calendarData[targetDateStr] || {};
-  AppState.calendarData[targetDateStr] = {
-    ...prevRecord,
-    date: targetDateStr,
-    memo: memoText,
-    updatedAt: Date.now()
-  };
+
+  if (selectedItems.length > 0) {
+    const analysis = typeof analyzeWorkoutParts === "function"
+      ? analyzeWorkoutParts(selectedItems)
+      : { mainPart: "운동", badgeText: `${selectedItems.length}개 완료`, badgeClass: "badge-upper", counts: { total: selectedItems.length } };
+
+    AppState.calendarData[targetDateStr] = {
+      ...prevRecord,
+      date: targetDateStr,
+      completedItems: selectedItems,
+      mainPart: analysis.mainPart,
+      statusText: analysis.badgeText,
+      badgeClass: analysis.badgeClass,
+      doneCount: selectedItems.length,
+      totalCount: selectedItems.length,
+      counts: analysis.counts,
+      memo: memoText,
+      updatedAt: Date.now()
+    };
+
+    // 만약 저장 대상이 '오늘'인 경우, 루틴 뷰의 완료 상태와도 상호 동기화!
+    if (targetDateStr === AppState.todayDateStr) {
+      const selectedSet = new Set(selectedItems);
+      AppState.completedExerciseIds.clear();
+
+      Object.values(WEEKLY_ROUTINES).forEach(routine => {
+        routine.exercises.forEach(ex => {
+          if (selectedSet.has(ex.name)) {
+            AppState.completedExerciseIds.add(ex.id);
+          }
+        });
+      });
+
+      localStorage.setItem(`myhealth_done_${AppState.todayDateStr}`, JSON.stringify(Array.from(AppState.completedExerciseIds)));
+      renderRoutineView();
+    }
+  } else if (memoText) {
+    // 운동은 없지만 메모만 있는 경우
+    AppState.calendarData[targetDateStr] = {
+      ...prevRecord,
+      date: targetDateStr,
+      completedItems: [],
+      mainPart: "없음",
+      statusText: "",
+      badgeClass: "none",
+      doneCount: 0,
+      totalCount: 0,
+      memo: memoText,
+      updatedAt: Date.now()
+    };
+
+    if (targetDateStr === AppState.todayDateStr) {
+      AppState.completedExerciseIds.clear();
+      localStorage.removeItem(`myhealth_done_${AppState.todayDateStr}`);
+      renderRoutineView();
+    }
+  } else {
+    // 운동도 없고 메모도 없으면 삭제
+    delete AppState.calendarData[targetDateStr];
+    if (targetDateStr === AppState.todayDateStr) {
+      AppState.completedExerciseIds.clear();
+      localStorage.removeItem(`myhealth_done_${AppState.todayDateStr}`);
+      renderRoutineView();
+    }
+  }
 
   saveCalendarData();
-  alert(`[${targetDateStr}] 메모가 안전하게 저장되었습니다! 📝`);
+  SoundEffects.playComplete();
+  alert(`[${targetDateStr}] 운동 기록과 메모가 안전하게 저장되었습니다! 💾`);
 
   renderCalendar();
   renderSelectedDateDetail();
@@ -998,45 +1163,6 @@ function resetCardioTimer() {
   updateCardioDisplay();
 }
 
-// === 6. 머신 도감 33종 렌더링 ===
-function renderLibraryView() {
-  filterMachinesLibrary("");
-}
-
-function filterMachinesLibrary(query, category = "all") {
-  const grid = document.getElementById("machinesGrid");
-  if (!grid) return;
-
-  const q = query.toLowerCase();
-  const filtered = MACHINES_DATA.filter(m => {
-    const matchCat = category === "all" || m.category === category;
-    const matchQuery = !q || m.name.toLowerCase().includes(q) || m.target.toLowerCase().includes(q) || m.brand.toLowerCase().includes(q);
-    return matchCat && matchQuery;
-  });
-
-  grid.innerHTML = "";
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-dim);">검색 결과와 일치하는 머신이 없습니다.</div>`;
-    return;
-  }
-
-  filtered.forEach(m => {
-    const card = document.createElement("div");
-    card.className = "lib-card";
-    card.innerHTML = `
-      <div class="lib-thumb">
-        <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80';">
-        <span class="lib-brand">${m.brand}</span>
-      </div>
-      <div class="lib-body">
-        <h4>${m.name}</h4>
-        <p>${m.target}</p>
-      </div>
-    `;
-    card.addEventListener("click", () => openMachineModal(m));
-    grid.appendChild(card);
-  });
-}
 
 // === 7. 데이터 백업 & 복원 ===
 function exportDataAsJson() {

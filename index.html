@@ -91,7 +91,7 @@
         </div>
       </div>
 
-      <!-- 서브 뷰 네비게이션 탭 (운동 루틴 / 달력 일지 / 머신 도감) -->
+      <!-- 서브 뷰 네비게이션 탭 (운동 루틴 / 달력 일지) -->
       <nav class="sub-nav-tabs" aria-label="메뉴 선택">
         <button class="sub-nav-tab active" data-view="routine">
           <span class="icon">💪</span>
@@ -100,10 +100,6 @@
         <button class="sub-nav-tab" data-view="calendar">
           <span class="icon">📅</span>
           <span>운동 달력 & 메모</span>
-        </button>
-        <button class="sub-nav-tab" data-view="library">
-          <span class="icon">📖</span>
-          <span>머신 도감 33종</span>
         </button>
       </nav>
     </header>
@@ -192,12 +188,34 @@
 
       <!-- 2. 운동 일지 & 달력 뷰 (Calendar & Diary with Memo) -->
       <section id="calendarView" class="view-section hidden">
+        <!-- 달력 안내 및 월간 통계 대시보드 카드 -->
+        <div class="cal-dashboard-card">
+          <div class="cal-guide-alert">
+            <span class="icon">💡</span>
+            <span>운동 루틴에서 <strong>[완료 ✔]</strong>를 누르면 달력에 출석과 완료 개수(<strong>✔ 모두 완료</strong> 등)가 자동으로 기록됩니다! 날짜를 터치하여 메모도 남겨보세요.</span>
+          </div>
+          <div class="cal-stats-row">
+            <div class="cal-stat-item">
+              <span class="stat-val" id="calMonthDoneDays">0일</span>
+              <span class="stat-lbl">이번 달 운동 완료</span>
+            </div>
+            <div class="cal-stat-item">
+              <span class="stat-val" id="calMonthAllDoneDays">0일</span>
+              <span class="stat-lbl">모두 완료 달성</span>
+            </div>
+            <div class="cal-stat-item">
+              <span class="stat-val" id="calTotalMemoCount">0개</span>
+              <span class="stat-lbl">작성된 메모</span>
+            </div>
+          </div>
+        </div>
+
         <!-- 상단 달력 컨트롤러 (월 이동) -->
         <div class="calendar-card">
           <div class="calendar-nav-bar">
             <div class="cal-title-wrap">
               <h2 id="calendarMonthTitle" class="calendar-month-heading">2026년 10월</h2>
-              <button id="btnCalGoToday" class="btn-cal-today">오늘</button>
+              <button id="btnCalGoToday" class="btn-cal-today">오늘로</button>
             </div>
             <div class="cal-nav-buttons">
               <button id="btnPrevMonth" class="btn-cal-arrow" title="이전 달">◀</button>
@@ -223,9 +241,11 @@
 
           <!-- 범례 가이드 -->
           <div class="cal-legend">
-            <span class="legend-item"><i class="legend-badge done-all"></i> 모두 완료</span>
-            <span class="legend-item"><i class="legend-badge done-part"></i> 일부 완료</span>
-            <span class="legend-item"><i class="legend-badge memo">📝</i> 메모 있음</span>
+            <span class="legend-item"><i class="legend-badge" style="background:#ea580c;"></i> 하체</span>
+            <span class="legend-item"><i class="legend-badge" style="background:#059669;"></i> 상체</span>
+            <span class="legend-item"><i class="legend-badge" style="background:#0284c7;"></i> 유산소</span>
+            <span class="legend-item"><i class="legend-badge" style="background:#7c3aed;"></i> 스트레칭</span>
+            <span class="legend-item"><i class="legend-badge memo">📝</i> 메모</span>
           </div>
         </div>
 
@@ -239,9 +259,29 @@
             <div id="panelStatusBadge" class="status-pill status-none">기록 없음</div>
           </div>
 
-          <!-- 그 날의 운동 요약 -->
+          <!-- 그 날의 운동 요약 및 편집 버튼 -->
+          <div class="panel-workout-header">
+            <span class="sub-heading">수행한 운동 내역</span>
+            <button id="btnToggleEditWorkout" class="btn-text-sm btn-edit-toggle">
+              ✏️ 운동 기록 수정/추가
+            </button>
+          </div>
           <div class="panel-workout-summary" id="panelWorkoutSummary">
             <div class="empty-workout-msg">이 날짜에 기록된 운동 정보가 없습니다.</div>
+          </div>
+
+          <!-- 운동 종목 편집 폼 (과거 날짜 수정/추가) -->
+          <div id="workoutEditorBox" class="workout-editor-box hidden">
+            <div class="editor-quick-presets">
+              <span class="preset-label">원클릭:</span>
+              <button class="btn-preset-pill" data-preset="lower">+ 하체 루틴</button>
+              <button class="btn-preset-pill" data-preset="upper">+ 상체 루틴</button>
+              <button class="btn-preset-pill" data-preset="cardio">+ 유산소</button>
+              <button class="btn-preset-pill btn-preset-clear" data-preset="clear">전체 해제</button>
+            </div>
+            <div id="editableExercisesList" class="editable-exercises-list">
+              <!-- JS로 부위별 체크박스 목록 렌더링 -->
+            </div>
           </div>
 
           <!-- 별도 메모 작성 및 수정 영역 -->
@@ -255,7 +295,7 @@
             <textarea id="dateMemoInput" placeholder="예: 체중 72.5kg, 레그프레스 120kg 4세트 달성! 무릎 통증 전혀 없이 펌핑감 아주 좋았음."></textarea>
             <div class="memo-actions">
               <button id="btnSaveDateMemo" class="btn btn-primary btn-block">
-                이 날짜 메모 저장하기 💾
+                이 날짜 운동 & 메모 저장하기 💾
               </button>
             </div>
           </div>
@@ -266,35 +306,6 @@
             <label for="importFileInput" class="btn-text-sm file-label">데이터 복원</label>
             <input type="file" id="importFileInput" accept=".json" class="hidden" />
           </div>
-        </div>
-      </section>
-
-      <!-- 3. 머신 도감 (33종) 뷰 -->
-      <section id="libraryView" class="view-section hidden">
-        <div class="library-header-card">
-          <h2>헬스 머신 가이드 & 도감 (33종)</h2>
-          <p>센터에 비치된 주요 머신들의 실제 사진과 사용법을 언제든 확인하세요.</p>
-          
-          <!-- 검색창 -->
-          <div class="search-input-box">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="machineSearchInput" placeholder="머신 이름 또는 부위 검색 (예: 레그프레스, 가슴, 어깨)" />
-          </div>
-
-          <!-- 부위 필터 버튼 -->
-          <div class="category-filters" id="categoryFilters">
-            <button class="cat-pill active" data-cat="all">전체 (33)</button>
-            <button class="cat-pill" data-cat="chest">가슴 (7)</button>
-            <button class="cat-pill" data-cat="back">등 (11)</button>
-            <button class="cat-pill" data-cat="legs">하체 (11)</button>
-            <button class="cat-pill" data-cat="shoulders">어깨 (3)</button>
-            <button class="cat-pill" data-cat="arms">팔 (1)</button>
-          </div>
-        </div>
-
-        <!-- 머신 그리드 -->
-        <div id="machinesGrid" class="machines-grid">
-          <!-- JS로 동적 렌더링 -->
         </div>
       </section>
     </main>
