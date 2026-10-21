@@ -91,7 +91,7 @@
         </div>
       </div>
 
-      <!-- 서브 뷰 네비게이션 탭 (운동 루틴 / 달력 일지) -->
+      <!-- 서브 뷰 네비게이션 탭 (운동 루틴 / 달력 일지 / 성장 그래프) -->
       <nav class="sub-nav-tabs" aria-label="메뉴 선택">
         <button class="sub-nav-tab active" data-view="routine">
           <span class="icon">💪</span>
@@ -100,6 +100,10 @@
         <button class="sub-nav-tab" data-view="calendar">
           <span class="icon">📅</span>
           <span>운동 달력 & 메모</span>
+        </button>
+        <button class="sub-nav-tab" data-view="chart">
+          <span class="icon">📈</span>
+          <span>성장 그래프</span>
         </button>
       </nav>
     </header>
@@ -187,7 +191,7 @@
       </section>
 
       <!-- 2. 운동 일지 & 달력 뷰 (Calendar & Diary with Memo) -->
-      <section id="calendarView" class="view-section hidden">
+      <section id="calendarView" class="view-section">
         <!-- 달력 안내 및 월간 통계 대시보드 카드 -->
         <div class="cal-dashboard-card">
           <div class="cal-guide-alert">
@@ -259,9 +263,18 @@
             <div id="panelStatusBadge" class="status-pill status-none">기록 없음</div>
           </div>
 
+          <!-- 당일 총 운동 볼륨 배너 -->
+          <div id="panelVolumeBanner" class="panel-volume-banner hidden">
+            <span class="vol-icon">🏋️‍♂️</span>
+            <div class="vol-texts">
+              <span class="vol-label">당일 총 운동 볼륨</span>
+              <span class="vol-val" id="panelVolumeValue">0 kg</span>
+            </div>
+          </div>
+
           <!-- 그 날의 운동 요약 및 편집 버튼 -->
           <div class="panel-workout-header">
-            <span class="sub-heading">수행한 운동 내역</span>
+            <span class="sub-heading">수행한 운동 및 세트 내역</span>
             <button id="btnToggleEditWorkout" class="btn-text-sm btn-edit-toggle">
               ✏️ 운동 기록 수정/추가
             </button>
@@ -305,6 +318,83 @@
             <button id="btnExportData" class="btn-text-sm">달력 데이터 백업(JSON)</button>
             <label for="importFileInput" class="btn-text-sm file-label">데이터 복원</label>
             <input type="file" id="importFileInput" accept=".json" class="hidden" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 기구별 최고 무게 & 성장 그래프 뷰 (Progression Chart) -->
+      <section id="chartView" class="view-section">
+        <div class="chart-section-card">
+          <div class="chart-card-header">
+            <div>
+              <span class="selected-day-tag">최고 무게 추이 분석</span>
+              <h2 class="chart-heading">기구별 무게 성장 그래프 📈</h2>
+              <p class="chart-desc">기구를 선택하면 날짜별 최고 무게(Max kg)와 볼륨 성장 곡선을 확인할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <!-- 기구 선택 셀렉트 박스 -->
+          <div class="chart-select-box">
+            <label for="chartExerciseSelect" class="chart-select-label">
+              <span class="icon">🎯</span> 분석할 운동 기구 선택
+            </label>
+            <select id="chartExerciseSelect" class="chart-select-input">
+              <!-- JS로 기구 목록 동적 생성 -->
+            </select>
+          </div>
+
+          <!-- 기구 핵심 지표 요약 카드 그리드 -->
+          <div class="chart-stats-grid">
+            <div class="stat-card pr-card">
+              <div class="stat-icon">👑</div>
+              <div class="stat-info">
+                <span class="stat-lbl">역대 최고 무게 (PR)</span>
+                <span class="stat-val" id="chartStatPrWeight">0 kg</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-info">
+                <span class="stat-lbl">최근 운동 무게</span>
+                <span class="stat-val" id="chartStatLatestWeight">0 kg</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📦</div>
+              <div class="stat-info">
+                <span class="stat-lbl">누적 총 볼륨</span>
+                <span class="stat-val" id="chartStatTotalVolume">0 kg</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🔥</div>
+              <div class="stat-info">
+                <span class="stat-lbl">총 수행 일수</span>
+                <span class="stat-val" id="chartStatSessionCount">0회</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 차트 모드 토글 (최고 무게 vs 세션 볼륨) -->
+          <div class="chart-toggle-row">
+            <span class="toggle-label">표시 지표:</span>
+            <div class="chart-toggle-buttons">
+              <button id="btnChartModeMax" class="btn-chart-mode active" data-mode="max">최고 무게 (kg)</button>
+              <button id="btnChartModeVol" class="btn-chart-mode" data-mode="vol">세션 볼륨 (kg)</button>
+            </div>
+          </div>
+
+          <!-- 반응형 SVG 차트 렌더링 컨테이너 -->
+          <div class="svg-chart-box" id="svgChartBox">
+            <!-- JS로 인터랙티브 SVG 라인 차트 렌더링 -->
+          </div>
+
+          <!-- 수행 기록 히스토리 목록 -->
+          <div class="chart-history-section">
+            <h4 class="history-title">📅 이 기구의 과거 운동 히스토리</h4>
+            <div id="chartHistoryList" class="chart-history-list">
+              <!-- JS로 날짜별 세트 기록 목록 렌더링 -->
+            </div>
           </div>
         </div>
       </section>

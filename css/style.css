@@ -1932,6 +1932,540 @@ body {
   font-size: 11px;
 }
 
+/* ==============================================================
+   === 3. 세트별 무게/횟수 로거 (Set Logger) 컴포넌트 ===
+   ============================================================== */
+
+.set-logger-wrap {
+  background-color: rgba(11, 18, 32, 0.85);
+  border-top: 1px solid var(--border-color);
+  padding: 12px 14px;
+}
+
+.set-logger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.set-logger-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-green-light);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.prev-log-hint {
+  font-size: 11px;
+  color: var(--accent-amber);
+  background-color: rgba(245, 158, 11, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.set-rows-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(23, 32, 51, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.set-row:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.set-num-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent-blue);
+  min-width: 42px;
+  text-align: center;
+}
+
+.set-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-set-number {
+  width: 58px;
+  background-color: #090d16;
+  border: 1px solid var(--border-color);
+  color: #fff;
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+
+.input-set-number::-webkit-outer-spin-button,
+.input-set-number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-set-number:focus {
+  outline: none;
+  border-color: var(--accent-green);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+.set-unit {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.set-times {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0 2px;
+}
+
+.btn-del-set {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-del-set:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fff;
+  border-color: var(--accent-red);
+}
+
+.set-logger-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-add-set {
+  flex: 1;
+  background-color: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--accent-blue);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-add-set:hover {
+  background-color: rgba(56, 189, 248, 0.25);
+  color: #fff;
+}
+
+.btn-save-sets {
+  flex: 1.6;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-save-sets:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+}
+
+/* 완료된 운동 행 내 세트 요약 */
+.completed-sets-summary {
+  font-size: 11px;
+  color: var(--accent-amber);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+/* ==============================================================
+   === 4. 달력 볼륨 표시 & 상세 패널 배너 ===
+   ============================================================== */
+
+.cal-volume-badge {
+  font-size: 9px;
+  font-weight: 800;
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 1px 4px;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-volume-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.15));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.panel-volume-banner .vol-icon {
+  font-size: 24px;
+  background-color: rgba(245, 158, 11, 0.2);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.panel-volume-banner .vol-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-volume-banner .vol-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.panel-volume-banner .vol-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+/* 기구별 세트 카드 (달력 상세) */
+.workout-detail-card {
+  background-color: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.workout-detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.workout-detail-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.workout-detail-metrics {
+  font-size: 11px;
+  color: var(--accent-amber);
+  font-weight: 700;
+}
+
+.workout-detail-sets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.set-chip {
+  background-color: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==============================================================
+   === 5. 기구별 최고 무게 & 성장 그래프 (Chart View) ===
+   ============================================================== */
+
+.chart-section-card {
+  background: linear-gradient(145deg, #162035, #101726);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.chart-card-header {
+  margin-bottom: 16px;
+}
+
+.chart-heading {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.chart-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.chart-select-box {
+  margin-bottom: 16px;
+  background-color: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.chart-select-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  margin-bottom: 8px;
+}
+
+.chart-select-input {
+  width: 100%;
+  background-color: #090d16;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.chart-select-input:focus {
+  outline: none;
+  border-color: var(--accent-green);
+}
+
+/* 통계 그리드 */
+.chart-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background-color: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-card.pr-card {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.9));
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
+.stat-card .stat-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.stat-card .stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card .stat-lbl {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.stat-card .stat-val {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.stat-card.pr-card .stat-val {
+  color: #fbbf24;
+}
+
+/* 토글 행 */
+.chart-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.toggle-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.chart-toggle-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-chart-mode {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-chart-mode.active {
+  background-color: var(--accent-blue);
+  color: #000;
+  border-color: var(--accent-blue);
+}
+
+/* SVG 차트 박스 */
+.svg-chart-box {
+  background-color: #090d16;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px 10px 10px 10px;
+  min-height: 240px;
+  position: relative;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svg-chart-box svg {
+  width: 100%;
+  height: 220px;
+  overflow: visible;
+}
+
+.chart-empty-msg {
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 13px;
+  padding: 40px 16px;
+  line-height: 1.6;
+}
+
+/* 히스토리 섹션 */
+.chart-history-section {
+  background-color: rgba(15, 23, 42, 0.6);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.history-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+
+.chart-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(23, 32, 51, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.history-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-blue);
+}
+
+.history-sets-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.history-metrics {
+  text-align: right;
+}
+
+.history-max-weight {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-green-light);
+}
+
+.history-vol {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
 /* 유틸리티 */
 .hidden {
   display: none !important;

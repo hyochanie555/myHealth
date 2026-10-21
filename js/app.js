@@ -102,7 +102,13 @@ const AppState = {
     intervalId: null,
     remainingSeconds: 50 * 60,
     isRunning: false
-  }
+  },
+
+  // 기구별 직전 수행 세트 기록 맵 (key: exerciseName -> { sets: [...], maxWeight, totalVolume, date })
+  lastExerciseLogs: {},
+
+  // 성장 차트 표시 모드 ("max" | "vol")
+  chartMode: "max"
 };
 
 const KOREAN_DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
@@ -182,6 +188,18 @@ function loadAllStoredData() {
   } else {
     AppState.calendarData = {};
   }
+
+  // 3. 기구별 직전 수행 세트 기록 맵 로드 (key: exerciseName -> { sets: [...], maxWeight, totalVolume, date })
+  const storedLastLogs = localStorage.getItem("myhealth_last_logs");
+  if (storedLastLogs) {
+    try {
+      AppState.lastExerciseLogs = JSON.parse(storedLastLogs);
+    } catch (e) {
+      AppState.lastExerciseLogs = {};
+    }
+  } else {
+    AppState.lastExerciseLogs = {};
+  }
 }
 
 function saveCompletedExercises() {
@@ -194,6 +212,10 @@ function saveCompletedExercises() {
 
 function saveCalendarData() {
   localStorage.setItem("myhealth_calendar_data", JSON.stringify(AppState.calendarData));
+}
+
+function saveLastExerciseLogs() {
+  localStorage.setItem("myhealth_last_logs", JSON.stringify(AppState.lastExerciseLogs));
 }
 
 // 전체 루틴 운동 ID -> 운동 이름 매핑 생성
@@ -231,6 +253,15 @@ function syncTodayCalendarRecord() {
       ? analyzeWorkoutParts(completedNames)
       : { mainPart: "운동", badgeText: `${completedNames.length}개 완료`, badgeClass: "badge-upper", counts: { total: completedNames.length } };
 
+    // 당일 세트 기록 보존 및 총 볼륨 계산
+    const exerciseLogs = prevRecord.exerciseLogs || {};
+    let totalVolume = 0;
+    completedNames.forEach(name => {
+      if (exerciseLogs[name] && exerciseLogs[name].totalVolume) {
+        totalVolume += exerciseLogs[name].totalVolume;
+      }
+    });
+
     AppState.calendarData[todayStr] = {
       ...prevRecord,
       date: todayStr,
@@ -244,6 +275,8 @@ function syncTodayCalendarRecord() {
       doneCount: completedNames.length,
       totalCount: completedNames.length,
       counts: analysis.counts,
+      exerciseLogs: exerciseLogs,
+      totalVolume: totalVolume,
       updatedAt: Date.now()
     };
   } else if (!prevRecord.memo) {
@@ -258,7 +291,9 @@ function syncTodayCalendarRecord() {
       statusText: "",
       badgeClass: "none",
       doneCount: 0,
-      totalCount: 0
+      totalCount: 0,
+      exerciseLogs: {},
+      totalVolume: 0
     };
   }
 
@@ -446,6 +481,31 @@ function bindEvents() {
       if (file) importDataFromJson(file);
     });
   }
+
+  // 14. 성장 그래프 기구 선택 및 모드 토글
+  const chartExerciseSelect = document.getElementById("chartExerciseSelect");
+  if (chartExerciseSelect) {
+    chartExerciseSelect.addEventListener("change", (e) => {
+      renderExerciseChart(e.target.value);
+    });
+  }
+
+  const btnChartModeMax = document.getElementById("btnChartModeMax");
+  const btnChartModeVol = document.getElementById("btnChartModeVol");
+  if (btnChartModeMax && btnChartModeVol) {
+    btnChartModeMax.addEventListener("click", () => {
+      btnChartModeMax.classList.add("active");
+      btnChartModeVol.classList.remove("active");
+      AppState.chartMode = "max";
+      if (chartExerciseSelect) renderExerciseChart(chartExerciseSelect.value);
+    });
+    btnChartModeVol.addEventListener("click", () => {
+      btnChartModeVol.classList.add("active");
+      btnChartModeMax.classList.remove("active");
+      AppState.chartMode = "vol";
+      if (chartExerciseSelect) renderExerciseChart(chartExerciseSelect.value);
+    });
+  }
 }
 
 // 요일 개별 선택 함수 (월/화/수/목/금/토/일)
@@ -461,7 +521,7 @@ function selectDay(dayKey) {
   switchView("routine");
 }
 
-// 서브 뷰 전환 ("routine" | "calendar")
+// 서브 뷰 전환 ("routine" | "calendar" | "chart")
 function switchView(viewName) {
   AppState.currentView = viewName;
 
@@ -472,14 +532,19 @@ function switchView(viewName) {
 
   const routineView = document.getElementById("routineView");
   const calendarView = document.getElementById("calendarView");
+  const chartView = document.getElementById("chartView");
 
   if (routineView) routineView.classList.remove("active");
   if (calendarView) calendarView.classList.remove("active");
+  if (chartView) chartView.classList.remove("active");
 
   if (viewName === "calendar") {
     if (calendarView) calendarView.classList.add("active");
     renderCalendar();
     renderSelectedDateDetail();
+  } else if (viewName === "chart") {
+    if (chartView) chartView.classList.add("active");
+    renderChartView();
   } else {
     if (routineView) routineView.classList.add("active");
     renderRoutineView();
@@ -583,10 +648,72 @@ function createExerciseCardElement(ex) {
   const imgUrl = ex.customImage || (machine ? machine.image : "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80");
   const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : "루틴");
 
-    const ytQuery = ex.youtubeQuery || (machine ? machine.name + " 운동 사용법" : ex.name + " 운동");
-    const ytUrl = makeYoutubeSearchUrl(ytQuery);
+  const ytQuery = ex.youtubeQuery || (machine ? machine.name + " 운동 사용법" : ex.name + " 운동");
+  const ytUrl = makeYoutubeSearchUrl(ytQuery);
 
-    card.innerHTML = `
+  const isSetTrackable = !ex.isWarmup && Boolean(ex.setsReps && ex.setsReps.includes("세트"));
+  let setLoggerHtml = "";
+
+  if (isSetTrackable) {
+    const prevLog = AppState.lastExerciseLogs[ex.name];
+    let initialSets = [];
+    let prevHint = "기본 권장 세트";
+
+    if (prevLog && prevLog.sets && prevLog.sets.length > 0) {
+      initialSets = prevLog.sets.map((s, idx) => ({
+        set: idx + 1,
+        weight: s.weight,
+        reps: s.reps
+      }));
+      prevHint = `직전 기록: 최고 ${prevLog.maxWeight}kg (${initialSets.length}세트)`;
+    } else {
+      // 권장 세트 파싱
+      const matchSets = ex.setsReps.match(/(\d+)세트/);
+      const setCount = matchSets ? parseInt(matchSets[1], 10) : 4;
+      const matchReps = ex.setsReps.match(/(\d+)(?:~(\d+))?회/);
+      const repsCount = matchReps ? parseInt(matchReps[1], 10) : 12;
+      const defaultWeight = 20;
+
+      for (let i = 1; i <= setCount; i++) {
+        initialSets.push({ set: i, weight: defaultWeight, reps: repsCount });
+      }
+      prevHint = `권장 루틴: ${ex.setsReps}`;
+    }
+
+    const setRowsHtml = initialSets.map(s => `
+      <div class="set-row">
+        <span class="set-num-badge">${s.set}세트</span>
+        <div class="set-input-group">
+          <input type="number" class="input-set-number set-weight-input" value="${s.weight}" min="0" max="999" step="2.5" inputmode="decimal">
+          <span class="set-unit">kg</span>
+        </div>
+        <span class="set-times">×</span>
+        <div class="set-input-group">
+          <input type="number" class="input-set-number set-reps-input" value="${s.reps}" min="1" max="999" step="1" inputmode="numeric">
+          <span class="set-unit">회</span>
+        </div>
+        <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
+      </div>
+    `).join("");
+
+    setLoggerHtml = `
+      <div class="set-logger-wrap" id="logger_${ex.id}">
+        <div class="set-logger-header">
+          <span class="set-logger-title">⚡ 세트별 무게 &amp; 횟수 기록</span>
+          <span class="prev-log-hint">${escapeHtml(prevHint)}</span>
+        </div>
+        <div class="set-rows-list" id="rows_${ex.id}">
+          ${setRowsHtml}
+        </div>
+        <div class="set-logger-footer">
+          <button type="button" class="btn-add-set" id="btnAddSet_${ex.id}">+ 세트 추가</button>
+          <button type="button" class="btn-save-sets" id="btnSaveSets_${ex.id}">완료 &amp; 세트 저장 ✔</button>
+        </div>
+      </div>
+    `;
+  }
+
+  card.innerHTML = `
     <div class="card-top">
       <div class="card-thumb-wrap" title="사진을 누르면 상세 사용법이 열립니다">
         <img src="${imgUrl}" alt="${ex.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80';">
@@ -611,6 +738,7 @@ function createExerciseCardElement(ex) {
       <span class="tip-icon">💡</span>
       <span>${ex.tip}</span>
     </div>
+    ${setLoggerHtml}
     <div class="card-actions">
       <button class="btn-card-action btn-guide" data-action="guide">📖 설명</button>
       <a class="btn-card-action btn-youtube" href="${ytUrl}" target="_blank" rel="noopener noreferrer" title="유튜브에서 한국어 인기 영상 보기">▶ 영상</a>
@@ -625,6 +753,9 @@ function createExerciseCardElement(ex) {
   const btnGuide = card.querySelector('[data-action="guide"]');
   const btnRest = card.querySelector('[data-action="rest"]');
   const btnComplete = card.querySelector('[data-action="complete"]');
+  const btnSaveSets = card.querySelector(`#btnSaveSets_${ex.id}`);
+  const btnAddSet = card.querySelector(`#btnAddSet_${ex.id}`);
+  const rowsContainer = card.querySelector(`#rows_${ex.id}`);
 
   const openGuide = () => {
     if (machine) {
@@ -642,12 +773,116 @@ function createExerciseCardElement(ex) {
     btnRest.addEventListener("click", () => startRestTimer(ex.restSec));
   }
 
-  // 오늘 완료 버튼 클릭 시 카드가 샤라락 사라짐!
-  if (btnComplete) {
-    btnComplete.addEventListener("click", () => {
-      dismissCardAndComplete(card, ex);
+  // 세트 삭제 이벤트 위임
+  if (rowsContainer) {
+    rowsContainer.addEventListener("click", (e) => {
+      if (e.target.closest(".btn-del-set")) {
+        const row = e.target.closest(".set-row");
+        if (row) {
+          row.remove();
+          const remaining = rowsContainer.querySelectorAll(".set-row");
+          if (remaining.length === 0) {
+            const newRow = document.createElement("div");
+            newRow.className = "set-row";
+            newRow.innerHTML = `
+              <span class="set-num-badge">1세트</span>
+              <div class="set-input-group">
+                <input type="number" class="input-set-number set-weight-input" value="20" min="0" max="999" step="2.5" inputmode="decimal">
+                <span class="set-unit">kg</span>
+              </div>
+              <span class="set-times">×</span>
+              <div class="set-input-group">
+                <input type="number" class="input-set-number set-reps-input" value="10" min="1" max="999" step="1" inputmode="numeric">
+                <span class="set-unit">회</span>
+              </div>
+              <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
+            `;
+            rowsContainer.appendChild(newRow);
+          } else {
+            remaining.forEach((r, idx) => {
+              const badge = r.querySelector(".set-num-badge");
+              if (badge) badge.textContent = `${idx + 1}세트`;
+            });
+          }
+        }
+      }
     });
   }
+
+  // + 세트 추가 버튼
+  if (btnAddSet && rowsContainer) {
+    btnAddSet.addEventListener("click", () => {
+      const remaining = rowsContainer.querySelectorAll(".set-row");
+      const nextSetNum = remaining.length + 1;
+      let lastWeight = 20;
+      let lastReps = 10;
+      if (remaining.length > 0) {
+        const lastRow = remaining[remaining.length - 1];
+        const wInput = lastRow.querySelector(".set-weight-input");
+        const rInput = lastRow.querySelector(".set-reps-input");
+        if (wInput) lastWeight = parseFloat(wInput.value) || 20;
+        if (rInput) lastReps = parseInt(rInput.value, 10) || 10;
+      }
+      const newRow = document.createElement("div");
+      newRow.className = "set-row";
+      newRow.innerHTML = `
+        <span class="set-num-badge">${nextSetNum}세트</span>
+        <div class="set-input-group">
+          <input type="number" class="input-set-number set-weight-input" value="${lastWeight}" min="0" max="999" step="2.5" inputmode="decimal">
+          <span class="set-unit">kg</span>
+        </div>
+        <span class="set-times">×</span>
+        <div class="set-input-group">
+          <input type="number" class="input-set-number set-reps-input" value="${lastReps}" min="1" max="999" step="1" inputmode="numeric">
+          <span class="set-unit">회</span>
+        </div>
+        <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
+      `;
+      rowsContainer.appendChild(newRow);
+    });
+  }
+
+  // 세트 기록 수집 및 완료 처리 함수
+  const saveAndComplete = () => {
+    if (isSetTrackable && rowsContainer) {
+      const rows = rowsContainer.querySelectorAll(".set-row");
+      const sets = [];
+      let maxWeight = 0;
+      let totalVolume = 0;
+
+      rows.forEach((r, idx) => {
+        const w = parseFloat(r.querySelector(".set-weight-input").value) || 0;
+        const reps = parseInt(r.querySelector(".set-reps-input").value, 10) || 0;
+        sets.push({ set: idx + 1, weight: w, reps: reps });
+        if (w > maxWeight) maxWeight = w;
+        totalVolume += (w * reps);
+      });
+
+      const logData = {
+        date: AppState.todayDateStr,
+        sets: sets,
+        maxWeight: maxWeight,
+        totalVolume: totalVolume
+      };
+
+      // 기구별 직전 수행 기록 캐시
+      AppState.lastExerciseLogs[ex.name] = logData;
+      saveLastExerciseLogs();
+
+      // 오늘 달력 데이터에 exerciseLogs 업데이트
+      const todayStr = AppState.todayDateStr;
+      const curRecord = AppState.calendarData[todayStr] || {};
+      const exerciseLogs = curRecord.exerciseLogs || {};
+      exerciseLogs[ex.name] = logData;
+      curRecord.exerciseLogs = exerciseLogs;
+      AppState.calendarData[todayStr] = curRecord;
+    }
+
+    dismissCardAndComplete(card, ex);
+  };
+
+  if (btnSaveSets) btnSaveSets.addEventListener("click", saveAndComplete);
+  if (btnComplete) btnComplete.addEventListener("click", saveAndComplete);
 
   return card;
 }
@@ -669,10 +904,22 @@ function dismissCardAndComplete(cardEl, ex) {
 function createCompletedRowElement(ex) {
   const row = document.createElement("div");
   row.className = "completed-item-row";
+
+  const todayRecord = AppState.calendarData[AppState.todayDateStr] || {};
+  const log = todayRecord.exerciseLogs ? todayRecord.exerciseLogs[ex.name] : null;
+
+  let setsSummaryHtml = "";
+  if (log && log.sets && log.sets.length > 0) {
+    setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg)</div>`;
+  }
+
   row.innerHTML = `
     <div class="completed-item-left">
       <span class="check-icon-done">✔</span>
-      <span class="completed-item-name">${ex.order}. ${ex.name} (${ex.setsReps})</span>
+      <div>
+        <span class="completed-item-name">${ex.order}. ${ex.name}</span>
+        ${setsSummaryHtml}
+      </div>
     </div>
     <button class="btn-undo-exercise" title="다시 남은 운동으로 되돌리기">되돌리기 ↩</button>
   `;
@@ -680,6 +927,9 @@ function createCompletedRowElement(ex) {
   const btnUndo = row.querySelector(".btn-undo-exercise");
   btnUndo.addEventListener("click", () => {
     AppState.completedExerciseIds.delete(ex.id);
+    if (todayRecord.exerciseLogs && todayRecord.exerciseLogs[ex.name]) {
+      delete todayRecord.exerciseLogs[ex.name];
+    }
     saveCompletedExercises();
     renderRoutineView();
   });
@@ -761,6 +1011,7 @@ function renderCalendar() {
     // 해당 날짜에 저장된 기록이 있는지 확인
     const record = AppState.calendarData[dateStr];
     let badgeHtml = "";
+    let volumeBadgeHtml = "";
     let memoIcon = "";
     let memoPreview = "";
 
@@ -768,6 +1019,12 @@ function renderCalendar() {
       if (record.statusText) {
         const badgeClass = record.badgeClass || (record.doneCount > 0 && record.doneCount === record.totalCount ? "all-done" : "part-done");
         badgeHtml = `<div class="cal-status-badge ${badgeClass}">${escapeHtml(record.statusText)}</div>`;
+      }
+      if (record.totalVolume && record.totalVolume > 0) {
+        const volStr = record.totalVolume >= 1000
+          ? (record.totalVolume / 1000).toFixed(1) + "톤"
+          : record.totalVolume.toLocaleString() + "kg";
+        volumeBadgeHtml = `<div class="cal-volume-badge" title="당일 총 볼륨: ${record.totalVolume.toLocaleString()}kg">🏋️ ${volStr}</div>`;
       }
       if (record.memo && record.memo.trim().length > 0) {
         memoIcon = "📝";
@@ -783,6 +1040,7 @@ function renderCalendar() {
         </div>
       </div>
       ${badgeHtml}
+      ${volumeBadgeHtml}
       ${memoPreview}
     `;
 
@@ -807,6 +1065,8 @@ function renderSelectedDateDetail() {
   const panelFullDateStr = document.getElementById("panelFullDateStr");
   const panelStatusBadge = document.getElementById("panelStatusBadge");
   const panelWorkoutSummary = document.getElementById("panelWorkoutSummary");
+  const panelVolumeBanner = document.getElementById("panelVolumeBanner");
+  const panelVolumeValue = document.getElementById("panelVolumeValue");
   const dateMemoInput = document.getElementById("dateMemoInput");
 
   if (panelFullDateStr) {
@@ -815,6 +1075,17 @@ function renderSelectedDateDetail() {
 
   const record = AppState.calendarData[targetDateStr];
 
+  // 당일 총 운동 볼륨 배너 갱신
+  if (record && record.totalVolume && record.totalVolume > 0) {
+    if (panelVolumeBanner) panelVolumeBanner.classList.remove("hidden");
+    if (panelVolumeValue) {
+      const tonStr = (record.totalVolume / 1000).toFixed(2);
+      panelVolumeValue.textContent = `${record.totalVolume.toLocaleString()} kg (${tonStr}톤)`;
+    }
+  } else {
+    if (panelVolumeBanner) panelVolumeBanner.classList.add("hidden");
+  }
+
   if (record && record.completedItems && record.completedItems.length > 0) {
     // 상태 뱃지
     if (panelStatusBadge) {
@@ -822,15 +1093,42 @@ function renderSelectedDateDetail() {
       panelStatusBadge.textContent = record.statusText || `${record.completedItems.length}개 완료`;
     }
 
-    // 운동 목록 칩
+    // 운동 상세 및 세트 목록 렌더링
     if (panelWorkoutSummary) {
       const mainPartText = record.mainPart ? `[${record.mainPart}] ` : "";
-      panelWorkoutSummary.innerHTML = `
-        <div style="font-weight:700; margin-bottom:6px; color:#fff; display:flex; align-items:center; gap:6px;">
+      const exerciseLogs = record.exerciseLogs || {};
+
+      let cardsHtml = `
+        <div style="font-weight:700; margin-bottom:8px; color:#fff; display:flex; align-items:center; justify-content:space-between;">
           <span>${mainPartText}총 ${record.completedItems.length}개 운동 완료</span>
         </div>
-        <div>${record.completedItems.map(item => `<span class="workout-item-chip">${escapeHtml(item)}</span>`).join('')}</div>
       `;
+
+      cardsHtml += record.completedItems.map(item => {
+        const log = exerciseLogs[item];
+        if (log && log.sets && log.sets.length > 0) {
+          const setsList = log.sets.map(s => `<span class="set-chip">${s.set}세트: ${s.weight}kg×${s.reps}회</span>`).join("");
+          return `
+            <div class="workout-detail-card">
+              <div class="workout-detail-title-row">
+                <span class="workout-detail-name">⚡ ${escapeHtml(item)}</span>
+                <span class="workout-detail-metrics">최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg</span>
+              </div>
+              <div class="workout-detail-sets-list">${setsList}</div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="workout-detail-card">
+              <div class="workout-detail-title-row">
+                <span class="workout-detail-name">✔ ${escapeHtml(item)}</span>
+              </div>
+            </div>
+          `;
+        }
+      }).join("");
+
+      panelWorkoutSummary.innerHTML = cardsHtml;
     }
 
     // 메모 값 로드
@@ -944,6 +1242,15 @@ function saveDateMemo() {
       ? analyzeWorkoutParts(selectedItems)
       : { mainPart: "운동", badgeText: `${selectedItems.length}개 완료`, badgeClass: "badge-upper", counts: { total: selectedItems.length } };
 
+    // 세트 기록 보존 및 볼륨 계산
+    const exerciseLogs = prevRecord.exerciseLogs || {};
+    let totalVolume = 0;
+    selectedItems.forEach(name => {
+      if (exerciseLogs[name] && exerciseLogs[name].totalVolume) {
+        totalVolume += exerciseLogs[name].totalVolume;
+      }
+    });
+
     AppState.calendarData[targetDateStr] = {
       ...prevRecord,
       date: targetDateStr,
@@ -954,6 +1261,8 @@ function saveDateMemo() {
       doneCount: selectedItems.length,
       totalCount: selectedItems.length,
       counts: analysis.counts,
+      exerciseLogs: exerciseLogs,
+      totalVolume: totalVolume,
       memo: memoText,
       updatedAt: Date.now()
     };
@@ -1163,6 +1472,250 @@ function resetCardioTimer() {
   updateCardioDisplay();
 }
 
+
+// === 6. 기구별 최고 무게 & 성장 그래프 뷰 (Chart View) ===
+function renderChartView() {
+  const selectEl = document.getElementById("chartExerciseSelect");
+  if (!selectEl) return;
+
+  // 셀렉트 박스 옵션이 비어있는 경우 채우기
+  if (selectEl.options.length === 0) {
+    const exerciseCategories = [
+      {
+        category: "하체 & 힙",
+        items: [
+          "뉴텍 레그 프레스 (or 시티드 레그 프레스)",
+          "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",
+          "뉴텍 레그 익스텐션",
+          "뉴텍 라잉 레그 컬",
+          "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
+          "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
+          "백익스텐션 (허리 기립근 & 둔근)"
+        ]
+      },
+      {
+        category: "가슴 & 삼두",
+        items: [
+          "뉴텍 시티드 체스트 프레스",
+          "뉴텍 펙덱플라이 (핀머신)",
+          "뉴텍 시티드 딥 (핀머신)"
+        ]
+      },
+      {
+        category: "등 & 이두",
+        items: [
+          "렉스코 랫풀다운",
+          "뉴텍 시티드로우 (핀머신)",
+          "뉴텍 암컬 (핀머신)"
+        ]
+      },
+      {
+        category: "어깨 & 복근",
+        items: [
+          "뉴텍 숄더프레스 (핀머신)",
+          "뉴텍 사이드 레터럴 레이즈 (핀머신)",
+          "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",
+          "원암 덤벨 사이드 벤드 (덤벨존 활용)"
+        ]
+      }
+    ];
+
+    selectEl.innerHTML = "";
+    exerciseCategories.forEach(grp => {
+      const optGroup = document.createElement("optgroup");
+      optGroup.label = grp.category;
+      grp.items.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item;
+        opt.textContent = item;
+        optGroup.appendChild(opt);
+      });
+      selectEl.appendChild(optGroup);
+    });
+  }
+
+  const selectedName = selectEl.value;
+  renderExerciseChart(selectedName);
+}
+
+function renderExerciseChart(exerciseName) {
+  if (!exerciseName) return;
+
+  const mode = AppState.chartMode || "max"; // "max" (최고 무게) | "vol" (총 볼륨)
+
+  // calendarData에서 해당 운동이 수행된 날짜별 기록 추출
+  const dateKeys = Object.keys(AppState.calendarData).sort();
+  const historyData = [];
+
+  dateKeys.forEach(dKey => {
+    const rec = AppState.calendarData[dKey];
+    if (rec.exerciseLogs && rec.exerciseLogs[exerciseName]) {
+      const log = rec.exerciseLogs[exerciseName];
+      historyData.push({
+        date: dKey,
+        dateShort: dKey.slice(5).replace("-", "/"), // MM/DD
+        maxWeight: log.maxWeight || 0,
+        totalVolume: log.totalVolume || 0,
+        sets: log.sets || []
+      });
+    }
+  });
+
+  // 통계 계산
+  let allTimePr = 0;
+  let latestWeight = 0;
+  let cumulativeVol = 0;
+  const sessionCount = historyData.length;
+
+  if (sessionCount > 0) {
+    allTimePr = Math.max(...historyData.map(h => h.maxWeight));
+    latestWeight = historyData[historyData.length - 1].maxWeight;
+    cumulativeVol = historyData.reduce((sum, h) => sum + h.totalVolume, 0);
+  }
+
+  // 지표 카드 업데이트
+  const statPr = document.getElementById("chartStatPrWeight");
+  const statLatest = document.getElementById("chartStatLatestWeight");
+  const statVol = document.getElementById("chartStatTotalVolume");
+  const statCount = document.getElementById("chartStatSessionCount");
+
+  if (statPr) statPr.textContent = allTimePr > 0 ? `${allTimePr} kg` : "0 kg";
+  if (statLatest) statLatest.textContent = latestWeight > 0 ? `${latestWeight} kg` : "0 kg";
+  if (statVol) {
+    statVol.textContent = cumulativeVol >= 1000 
+      ? `${(cumulativeVol / 1000).toFixed(1)} 톤` 
+      : `${cumulativeVol.toLocaleString()} kg`;
+  }
+  if (statCount) statCount.textContent = `${sessionCount} 회`;
+
+  const svgBox = document.getElementById("svgChartBox");
+  const historyList = document.getElementById("chartHistoryList");
+
+  if (sessionCount === 0) {
+    if (svgBox) {
+      svgBox.innerHTML = `
+        <div class="chart-empty-msg">
+          🏋️ 아직 <strong>[${escapeHtml(exerciseName)}]</strong>의 세트 기록이 없습니다.<br>
+          💪 <strong>[운동 루틴]</strong>에서 세트별 무게(kg)를 입력하고 완료하면<br>
+          여기에 날짜별 최고 무게 상승 곡선과 역대 PR이 그려집니다!
+        </div>
+      `;
+    }
+    if (historyList) {
+      historyList.innerHTML = `<div style="text-align:center; color:var(--text-dim); padding:16px; font-size:12px;">기록된 과거 세트 히스토리가 없습니다.</div>`;
+    }
+    return;
+  }
+
+  // SVG 차트 그리기
+  const values = historyData.map(h => (mode === "max" ? h.maxWeight : h.totalVolume));
+  const maxVal = Math.max(...values, 10) * 1.15;
+  const minVal = 0;
+
+  const svgW = 500;
+  const svgH = 220;
+  const padLeft = 45;
+  const padRight = 30;
+  const padTop = 30;
+  const padBottom = 35;
+  const plotW = svgW - padLeft - padRight;
+  const plotH = svgH - padTop - padBottom;
+
+  const coords = historyData.map((h, idx) => {
+    const val = mode === "max" ? h.maxWeight : h.totalVolume;
+    const x = historyData.length === 1 
+      ? padLeft + plotW / 2 
+      : padLeft + (idx / (historyData.length - 1)) * plotW;
+    const y = padTop + plotH - ((val - minVal) / (maxVal - minVal)) * plotH;
+    return { x, y, val, date: h.date, dateShort: h.dateShort, maxWeight: h.maxWeight, totalVolume: h.totalVolume };
+  });
+
+  // 그리드 라인 (4분할)
+  let gridLinesHtml = "";
+  for (let i = 0; i <= 3; i++) {
+    const yVal = Math.round(minVal + ((maxVal - minVal) / 3) * i);
+    const lineY = padTop + plotH - (i / 3) * plotH;
+    gridLinesHtml += `
+      <line x1="${padLeft}" y1="${lineY}" x2="${svgW - padRight}" y2="${lineY}" stroke="#27354d" stroke-dasharray="3,3" stroke-width="1" />
+      <text x="${padLeft - 6}" y="${lineY + 4}" fill="#64748b" font-size="10" text-anchor="end" font-weight="600">${yVal}</text>
+    `;
+  }
+
+  // 선 & 면적 패스
+  let linePathD = "";
+  let areaPathD = "";
+
+  if (coords.length === 1) {
+    linePathD = `M ${coords[0].x - 30} ${coords[0].y} L ${coords[0].x + 30} ${coords[0].y}`;
+    areaPathD = `M ${coords[0].x - 30} ${coords[0].y} L ${coords[0].x + 30} ${coords[0].y} L ${coords[0].x + 30} ${padTop + plotH} L ${coords[0].x - 30} ${padTop + plotH} Z`;
+  } else {
+    linePathD = coords.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x} ${pt.y}`, "");
+    areaPathD = `${linePathD} L ${coords[coords.length - 1].x} ${padTop + plotH} L ${coords[0].x} ${padTop + plotH} Z`;
+  }
+
+  // 포인트 마커 및 텍스트 라벨
+  let pointsHtml = "";
+  coords.forEach((pt, idx) => {
+    const isPr = mode === "max" && pt.maxWeight === allTimePr && allTimePr > 0;
+    const markerColor = isPr ? "#fbbf24" : "#10b981";
+    const labelY = pt.y - 10;
+    const labelText = isPr ? `👑 ${pt.val}kg` : `${pt.val}${mode === "max" ? "kg" : ""}`;
+
+    pointsHtml += `
+      <g class="chart-point-group" data-idx="${idx}">
+        <circle cx="${pt.x}" cy="${pt.y}" r="${isPr ? 7 : 5}" fill="${markerColor}" stroke="#0f172a" stroke-width="2.5" />
+        ${isPr ? `<circle cx="${pt.x}" cy="${pt.y}" r="11" fill="none" stroke="#fbbf24" stroke-width="1.5" opacity="0.6" />` : ''}
+        <text x="${pt.x}" y="${labelY}" fill="${isPr ? '#fbbf24' : '#f8fafc'}" font-size="${isPr ? 12 : 10}" font-weight="800" text-anchor="middle">${labelText}</text>
+        <text x="${pt.x}" y="${padTop + plotH + 18}" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle">${pt.dateShort}</text>
+      </g>
+    `;
+  });
+
+  const lineColor = mode === "max" ? "#10b981" : "#38bdf8";
+  const gradColor = mode === "max" ? "#10b981" : "#38bdf8";
+
+  if (svgBox) {
+    svgBox.innerHTML = `
+      <svg viewBox="0 0 ${svgW} ${svgH}">
+        <defs>
+          <linearGradient id="chartAreaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${gradColor}" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="${gradColor}" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+        ${gridLinesHtml}
+        <path d="${areaPathD}" fill="url(#chartAreaGrad)" />
+        <path d="${linePathD}" fill="none" stroke="${lineColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        ${pointsHtml}
+      </svg>
+    `;
+  }
+
+  // 히스토리 리스트 렌더링 (최신 날짜부터 역순)
+  if (historyList) {
+    const reversedHistory = [...historyData].reverse();
+    historyList.innerHTML = reversedHistory.map(h => {
+      const isPr = h.maxWeight === allTimePr && allTimePr > 0;
+      const setsStr = h.sets && h.sets.length > 0 
+        ? h.sets.map(s => `${s.weight}k×${s.reps}`).join(", ") 
+        : "기록 없음";
+      const prBadge = isPr ? `<span style="color:#fbbf24; font-weight:800; font-size:10px; margin-left:4px;">👑 PR</span>` : "";
+
+      return `
+        <div class="history-item-row">
+          <div>
+            <div class="history-date">📅 ${h.date} ${prBadge}</div>
+            <div class="history-sets-text">${escapeHtml(setsStr)}</div>
+          </div>
+          <div class="history-metrics">
+            <div class="history-max-weight">${h.maxWeight} kg</div>
+            <div class="history-vol">볼륨 ${h.totalVolume.toLocaleString()}kg</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+}
 
 // === 7. 데이터 백업 & 복원 ===
 function exportDataAsJson() {
