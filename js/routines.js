@@ -205,20 +205,32 @@ const EXERCISES_TUE_LOWER = [
     youtubeQuery: "라잉 레그컬 햄스트링 자극 팁"
   },
   {
-    id: "tue_l5",
+    id: "tue_l5_add",
     order: "5",
-    name: "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
+    name: "뉴텍 힙 어덕션 (허벅지 안쪽 모으는)",
+    alternative: "",
+    machineId: "m26",
+    target: "허벅지 안쪽 (내전근 탄력)",
+    setsReps: "3세트 × 15회",
+    restSec: 45,
+    tip: "허벅지 안쪽 힘으로 패드를 지그시 모으고 천천히 버티며 이완합니다. 모으는 동작에 집중!",
+    youtubeQuery: "힙어덕션 머신 내전근 운동 자세"
+  },
+  {
+    id: "tue_l5_abd",
+    order: "6",
+    name: "뉴텍 힙 어브덕션 (엉덩이 바깥쪽 벌리는)",
     alternative: "렉스코 링크 아웃타이",
     machineId: "m26",
-    target: "안쪽 허벅지 & 엉덩이 바깥 (중둔근)",
-    setsReps: "각 3세트 × 15회",
+    target: "엉덩이 바깥쪽 (중둔근 & 골반 라인)",
+    setsReps: "3세트 × 15회",
     restSec: 45,
-    tip: "모으기(내전근) + 벌리기(중둔근) 연속 진행. 상체를 살짝 앞으로 숙여 엉덩이 집중.",
-    youtubeQuery: "힙어덕션 힙어브덕션 머신 사용법"
+    tip: "상체를 살짝 앞으로 숙여 엉덩이 바깥쪽 자극을 느끼며 패드를 힘차게 벌립니다.",
+    youtubeQuery: "힙어브덕션 머신 아웃타이 중둔근 자세"
   },
   {
     id: "tue_l6",
-    order: "6",
+    order: "7",
     name: "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
     alternative: "부티빌더 힙쓰러스트",
     machineId: "m25",
@@ -230,41 +242,44 @@ const EXERCISES_TUE_LOWER = [
   },
   {
     id: "tue_l7",
-    order: "7",
+    order: "8",
     name: "백익스텐션 (허리 기립근 & 둔근)",
     alternative: "45도 하이퍼 익스텐션",
     machineId: null,
     customImage: FITNESS_IMAGES.backExtension,
-    target: "척추기립근 (허리 코어) & 둔근/햄스트링",
+    target: "척추기립근 & 둔근 (맨몸 코어)",
     setsReps: "3세트 × 15회",
     restSec: 45,
-    tip: "패드를 골반 바로 아래 맞추고, 허리를 과도하게 젖히지 말고 몸이 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
+    isBodyweight: true,
+    tip: "패드를 골반 바로 아래 맞추고, 맨몸으로 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
     youtubeQuery: "백익스텐션 허리 기립근 엉덩이 자세"
   },
   {
     id: "tue_l8",
-    order: "8",
-    name: "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",
-    alternative: "매트 레그레이즈",
-    machineId: "m11",
-    target: "하복부 (아랫배)",
-    setsReps: "3세트 × 15회",
+    order: "9",
+    name: "복근운동 - 누워서 다리들기 (레그레이즈)",
+    alternative: "풀업 머신 행잉 니 레이즈",
+    machineId: null,
+    customImage: FITNESS_IMAGES.hangingLegRaise,
+    target: "하복부 (아랫배 맨몸 코어)",
+    setsReps: "3세트 × 15~20회",
     restSec: 45,
-    tip: "무릎을 90도로 접어 배꼽/가슴 쪽으로 골반 말아 올리기. 반동 주지 않기.",
-    youtubeQuery: "행잉 니레이즈 복근운동 팁"
+    isBodyweight: true,
+    tip: "매트에 누워 손을 엉덩이 밑에 받치고, 허리가 바닥에서 뜨지 않도록 아랫배를 지그시 누르며 다리를 올리고 내립니다.",
+    youtubeQuery: "누워서 레그레이즈 허리 안아프게 복근 자세"
   },
   {
     id: "tue_l9",
-    order: "9",
-    name: "원암 덤벨 사이드 벤드 (덤벨존 활용)",
-    alternative: "",
+    order: "10",
+    name: "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
+    alternative: "덤벨 사이드 벤드",
     machineId: null,
     customImage: FITNESS_IMAGES.dumbbellSideBend,
     target: "옆구리 (외복사근)",
     setsReps: "좌/우 각 3세트 × 15회",
     restSec: 45,
-    tip: "반드시 한 손에만 덤벨 들기(5~8kg), 반대쪽 옆구리 수축. 골반은 정면에 고정.",
-    youtubeQuery: "덤벨 사이드벤드 외복사근 옆구리"
+    tip: "바벨이나 덤벨을 한 손에만 들고 옆으로 서서 반대쪽 옆구리가 깊게 쥐어짜지도록 수축합니다. 골반은 정면에 고정!",
+    youtubeQuery: "바벨 덤벨 사이드벤드 외복사근 옆구리"
   }
 ];
 
@@ -500,20 +515,32 @@ const EXERCISES_FRI_LOWER = [
     youtubeQuery: "라잉 레그컬 햄스트링 자극 팁"
   },
   {
-    id: "fri_l5",
+    id: "fri_l5_add",
     order: "5",
-    name: "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
+    name: "뉴텍 힙 어덕션 (허벅지 안쪽 모으는)",
+    alternative: "",
+    machineId: "m26",
+    target: "허벅지 안쪽 (내전근 탄력)",
+    setsReps: "3세트 × 15회",
+    restSec: 45,
+    tip: "허벅지 안쪽 힘으로 패드를 지그시 모으고 천천히 버티며 이완합니다. 모으는 동작에 집중!",
+    youtubeQuery: "힙어덕션 머신 내전근 운동 자세"
+  },
+  {
+    id: "fri_l5_abd",
+    order: "6",
+    name: "뉴텍 힙 어브덕션 (엉덩이 바깥쪽 벌리는)",
     alternative: "렉스코 링크 아웃타이",
     machineId: "m26",
-    target: "안쪽 허벅지 & 엉덩이 바깥 (중둔근)",
-    setsReps: "각 3세트 × 15회",
+    target: "엉덩이 바깥쪽 (중둔근 & 골반 라인)",
+    setsReps: "3세트 × 15회",
     restSec: 45,
-    tip: "모으기(내전근) + 벌리기(중둔근) 연속 진행. 상체를 살짝 앞으로 숙여 엉덩이 집중.",
-    youtubeQuery: "힙어덕션 힙어브덕션 머신 사용법"
+    tip: "상체를 살짝 앞으로 숙여 엉덩이 바깥쪽 자극을 느끼며 패드를 힘차게 벌립니다.",
+    youtubeQuery: "힙어브덕션 머신 아웃타이 중둔근 자세"
   },
   {
     id: "fri_l6",
-    order: "6",
+    order: "7",
     name: "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
     alternative: "부티빌더 힙쓰러스트",
     machineId: "m25",
@@ -525,16 +552,44 @@ const EXERCISES_FRI_LOWER = [
   },
   {
     id: "fri_l7",
-    order: "7",
+    order: "8",
     name: "백익스텐션 (허리 기립근 & 둔근)",
     alternative: "45도 하이퍼 익스텐션",
     machineId: null,
     customImage: FITNESS_IMAGES.backExtension,
-    target: "척추기립근 (허리 코어) & 둔근/햄스트링",
+    target: "척추기립근 & 둔근 (맨몸 코어)",
     setsReps: "3세트 × 15회",
     restSec: 45,
-    tip: "패드를 골반 바로 아래 맞추고, 허리를 과도하게 젖히지 말고 몸이 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
+    isBodyweight: true,
+    tip: "패드를 골반 바로 아래 맞추고, 맨몸으로 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
     youtubeQuery: "백익스텐션 허리 기립근 엉덩이 자세"
+  },
+  {
+    id: "fri_l8",
+    order: "9",
+    name: "복근운동 - 누워서 다리들기 (레그레이즈)",
+    alternative: "풀업 머신 행잉 니 레이즈",
+    machineId: null,
+    customImage: FITNESS_IMAGES.hangingLegRaise,
+    target: "하복부 (아랫배 맨몸 코어)",
+    setsReps: "3세트 × 15~20회",
+    restSec: 45,
+    isBodyweight: true,
+    tip: "매트에 누워 손을 엉덩이 밑에 받치고, 허리가 바닥에서 뜨지 않도록 아랫배를 지그시 누르며 다리를 올리고 내립니다.",
+    youtubeQuery: "누워서 레그레이즈 허리 안아프게 복근 자세"
+  },
+  {
+    id: "fri_l9",
+    order: "10",
+    name: "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
+    alternative: "덤벨 사이드 벤드",
+    machineId: null,
+    customImage: FITNESS_IMAGES.dumbbellSideBend,
+    target: "옆구리 (외복사근)",
+    setsReps: "좌/우 각 3세트 × 15회",
+    restSec: 45,
+    tip: "바벨이나 덤벨을 한 손에만 들고 옆으로 서서 반대쪽 옆구리가 깊게 쥐어짜지도록 수축합니다. 골반은 정면에 고정!",
+    youtubeQuery: "바벨 덤벨 사이드벤드 외복사근 옆구리"
   }
 ];
 
@@ -714,6 +769,8 @@ const EXERCISE_BODY_PARTS = {
   "뉴텍 레그 프레스 (or 시티드 레그 프레스)": "하체",
   "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)": "하체",
   "뉴텍 라잉 레그 컬": "하체",
+  "뉴텍 힙 어덕션 (허벅지 안쪽 모으는)": "하체",
+  "뉴텍 힙 어브덕션 (엉덩이 바깥쪽 벌리는)": "하체",
   "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)": "하체",
   "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)": "하체",
   "백익스텐션 (허리 기립근 & 둔근)": "하체",
@@ -734,7 +791,9 @@ const EXERCISE_BODY_PARTS = {
   "뉴텍 암컬 (핀머신)": "상체",
   "어깨 회전근개 & 동적 상체 스트레칭": "상체",
 
-  // 복근
+  // 복근 & 코어
+  "복근운동 - 누워서 다리들기 (레그레이즈)": "복근",
+  "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)": "복근",
   "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)": "복근",
   "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)": "복근",
   "원암 덤벨 사이드 벤드 (덤벨존 활용)": "복근",
@@ -777,7 +836,7 @@ function analyzeWorkoutParts(completedItemNames) {
       else if (name.includes("체스트") || name.includes("풀다운") || name.includes("플라이") || name.includes("로우") || name.includes("숄더") || name.includes("딥") || name.includes("컬")) upper++;
       else if (name.includes("트레드밀") || name.includes("스텝밀") || name.includes("사이클") || name.includes("유산소")) cardio++;
       else if (name.includes("스트레칭") || name.includes("폼롤러")) recovery++;
-      else if (name.includes("니 레이즈") || name.includes("사이드 벤드") || name.includes("복근")) core++;
+      else if (name.includes("니 레이즈") || name.includes("사이드 벤드") || name.includes("복근") || name.includes("다리들기")) core++;
       else upper++;
     }
   });
@@ -828,7 +887,8 @@ const ALL_EDITABLE_EXERCISES = [
       "뉴텍 레그 프레스 (or 시티드 레그 프레스)",
       "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",
       "뉴텍 라잉 레그 컬",
-      "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
+      "뉴텍 힙 어덕션 (허벅지 안쪽 모으는)",
+      "뉴텍 힙 어브덕션 (엉덩이 바깥쪽 벌리는)",
       "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
       "백익스텐션 (허리 기립근 & 둔근)",
       "고관절 스트레칭 & 맨몸 스쿼트"
@@ -851,7 +911,10 @@ const ALL_EDITABLE_EXERCISES = [
   {
     category: "복근 & 코어",
     items: [
+      "복근운동 - 누워서 다리들기 (레그레이즈)",
+      "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
       "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",
+      "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
       "원암 덤벨 사이드 벤드 (덤벨존 활용)"
     ]
   },

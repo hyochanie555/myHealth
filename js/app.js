@@ -637,6 +637,135 @@ function renderRoutineView() {
   }
 }
 
+// 무게 드롭다운 옵션 생성 (5kg 단위: 0~200kg)
+function buildWeightSelectOptions(selectedWeight, isBodyweight) {
+  if (isBodyweight) return "";
+  const selNum = parseFloat(selectedWeight) || 0;
+  const weights = [];
+  for (let w = 0; w <= 200; w += 5) {
+    weights.push(w);
+  }
+  if (selNum > 0 && !weights.includes(selNum)) {
+    weights.push(selNum);
+    weights.sort((a, b) => a - b);
+  }
+  return weights.map(w => {
+    const isSel = (w === selNum) ? "selected" : "";
+    return `<option value="${w}" ${isSel}>${w} kg</option>`;
+  }).join("");
+}
+
+// 횟수 드롭다운 옵션 생성 (1회 단위: 1~50회)
+function buildRepsSelectOptions(selectedReps) {
+  const selNum = parseInt(selectedReps, 10) || 12;
+  const repsList = [];
+  for (let r = 1; r <= 50; r++) {
+    repsList.push(r);
+  }
+  if (selNum > 50 && !repsList.includes(selNum)) {
+    repsList.push(selNum);
+  }
+  return repsList.map(r => {
+    const isSel = (r === selNum) ? "selected" : "";
+    return `<option value="${r}" ${isSel}>${r} 회</option>`;
+  }).join("");
+}
+
+// 세트 행 HTML 생성 헬퍼
+function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
+  const compClass = isCompleted ? "completed" : "";
+  const checkIcon = isCompleted ? "✔" : "";
+
+  if (isBodyweight) {
+    return `
+      <div class="set-row bodyweight-row ${compClass}" data-set="${setNumber}">
+        <button type="button" class="set-status-btn ${compClass}" title="세트 완료 상태 전환">
+          <span class="set-status-icon">${checkIcon}</span>
+          <span class="set-num-text">${setNumber}세트</span>
+        </button>
+        <span class="bodyweight-pill">맨몸</span>
+        <div class="set-select-group reps-group full-reps">
+          <select class="set-select set-reps-select" aria-label="${setNumber}세트 횟수">
+            ${buildRepsSelectOptions(reps)}
+          </select>
+        </div>
+        <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
+      </div>
+    `;
+  } else {
+    return `
+      <div class="set-row ${compClass}" data-set="${setNumber}">
+        <button type="button" class="set-status-btn ${compClass}" title="세트 완료 상태 전환">
+          <span class="set-status-icon">${checkIcon}</span>
+          <span class="set-num-text">${setNumber}세트</span>
+        </button>
+        <div class="set-select-group weight-group">
+          <select class="set-select set-weight-select" aria-label="${setNumber}세트 무게">
+            ${buildWeightSelectOptions(weight, false)}
+          </select>
+        </div>
+        <span class="set-times">×</span>
+        <div class="set-select-group reps-group">
+          <select class="set-select set-reps-select" aria-label="${setNumber}세트 횟수">
+            ${buildRepsSelectOptions(reps)}
+          </select>
+        </div>
+        <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
+      </div>
+    `;
+  }
+}
+
+// 자동 저장 헬퍼
+function autoSaveExerciseSets(ex, rowsContainer) {
+  if (!rowsContainer) return;
+  const rows = rowsContainer.querySelectorAll(".set-row");
+  const sets = [];
+  let maxWeight = 0;
+  let totalVolume = 0;
+
+  rows.forEach((r, idx) => {
+    const wEl = r.querySelector(".set-weight-select");
+    const rEl = r.querySelector(".set-reps-select");
+    const w = wEl ? parseFloat(wEl.value) || 0 : 0;
+    const reps = rEl ? parseInt(rEl.value, 10) || 0 : 0;
+    const isCompleted = r.classList.contains("completed");
+    sets.push({ set: idx + 1, weight: w, reps: reps, isCompleted: isCompleted });
+    if (w > maxWeight) maxWeight = w;
+    totalVolume += (w * reps);
+  });
+
+  const logData = {
+    date: AppState.todayDateStr,
+    sets: sets,
+    maxWeight: maxWeight,
+    totalVolume: totalVolume,
+    isBodyweight: Boolean(ex.isBodyweight)
+  };
+
+  AppState.lastExerciseLogs[ex.name] = logData;
+  saveLastExerciseLogs();
+
+  const todayStr = AppState.todayDateStr;
+  const curRecord = AppState.calendarData[todayStr] || {};
+  const exerciseLogs = curRecord.exerciseLogs || {};
+  exerciseLogs[ex.name] = logData;
+  curRecord.exerciseLogs = exerciseLogs;
+
+  // 총 볼륨 갱신
+  let dayVolume = 0;
+  if (curRecord.completedItems) {
+    curRecord.completedItems.forEach(name => {
+      if (exerciseLogs[name] && exerciseLogs[name].totalVolume) {
+        dayVolume += exerciseLogs[name].totalVolume;
+      }
+    });
+  }
+  curRecord.totalVolume = dayVolume;
+  AppState.calendarData[todayStr] = curRecord;
+  saveCalendarData();
+}
+
 // 개별 운동 카드 HTML 생성
 function createExerciseCardElement(ex) {
   const machine = ex.machineId ? MACHINES_DATA.find(m => m.id === ex.machineId) : findMachineByName(ex.name);
@@ -646,7 +775,7 @@ function createExerciseCardElement(ex) {
 
   // 사진 우선순위: ex.customImage > machine.image > 고품질 fallback
   const imgUrl = ex.customImage || (machine ? machine.image : "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80");
-  const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : "루틴");
+  const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : (ex.isBodyweight ? "맨몸" : "루틴"));
 
   const ytQuery = ex.youtubeQuery || (machine ? machine.name + " 운동 사용법" : ex.name + " 운동");
   const ytUrl = makeYoutubeSearchUrl(ytQuery);
@@ -657,49 +786,40 @@ function createExerciseCardElement(ex) {
   if (isSetTrackable) {
     const prevLog = AppState.lastExerciseLogs[ex.name];
     let initialSets = [];
-    let prevHint = "기본 권장 세트";
+    let prevHint = ex.isBodyweight ? "맨몸 운동 (횟수만 기록)" : "기본 권장 세트";
 
     if (prevLog && prevLog.sets && prevLog.sets.length > 0) {
       initialSets = prevLog.sets.map((s, idx) => ({
         set: idx + 1,
         weight: s.weight,
-        reps: s.reps
+        reps: s.reps,
+        isCompleted: s.isCompleted || false
       }));
-      prevHint = `직전 기록: 최고 ${prevLog.maxWeight}kg (${initialSets.length}세트)`;
+      prevHint = ex.isBodyweight
+        ? `직전 기록: ${initialSets.length}세트 (최고 ${Math.max(...initialSets.map(s => s.reps))}회)`
+        : `직전 기록: 최고 ${prevLog.maxWeight}kg (${initialSets.length}세트)`;
     } else {
       // 권장 세트 파싱
       const matchSets = ex.setsReps.match(/(\d+)세트/);
-      const setCount = matchSets ? parseInt(matchSets[1], 10) : 4;
+      const setCount = matchSets ? parseInt(matchSets[1], 10) : 3;
       const matchReps = ex.setsReps.match(/(\d+)(?:~(\d+))?회/);
-      const repsCount = matchReps ? parseInt(matchReps[1], 10) : 12;
-      const defaultWeight = 20;
+      const repsCount = matchReps ? parseInt(matchReps[1], 10) : (ex.isBodyweight ? 15 : 12);
+      const defaultWeight = ex.isBodyweight ? 0 : 20;
 
       for (let i = 1; i <= setCount; i++) {
-        initialSets.push({ set: i, weight: defaultWeight, reps: repsCount });
+        initialSets.push({ set: i, weight: defaultWeight, reps: repsCount, isCompleted: false });
       }
-      prevHint = `권장 루틴: ${ex.setsReps}`;
+      prevHint = ex.isBodyweight ? `권장: ${ex.setsReps} (맨몸)` : `권장 루틴: ${ex.setsReps}`;
     }
 
-    const setRowsHtml = initialSets.map(s => `
-      <div class="set-row">
-        <span class="set-num-badge">${s.set}세트</span>
-        <div class="set-input-group">
-          <input type="number" class="input-set-number set-weight-input" value="${s.weight}" min="0" max="999" step="2.5" inputmode="decimal">
-          <span class="set-unit">kg</span>
-        </div>
-        <span class="set-times">×</span>
-        <div class="set-input-group">
-          <input type="number" class="input-set-number set-reps-input" value="${s.reps}" min="1" max="999" step="1" inputmode="numeric">
-          <span class="set-unit">회</span>
-        </div>
-        <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
-      </div>
-    `).join("");
+    const setRowsHtml = initialSets.map(s => 
+      createSetRowHtml(s.set, s.weight, s.reps, ex.isBodyweight, s.isCompleted)
+    ).join("");
 
     setLoggerHtml = `
       <div class="set-logger-wrap" id="logger_${ex.id}">
         <div class="set-logger-header">
-          <span class="set-logger-title">⚡ 세트별 무게 &amp; 횟수 기록</span>
+          <span class="set-logger-title">⚡ 세트별 기록 (드롭다운 터치)</span>
           <span class="prev-log-hint">${escapeHtml(prevHint)}</span>
         </div>
         <div class="set-rows-list" id="rows_${ex.id}">
@@ -773,37 +893,78 @@ function createExerciseCardElement(ex) {
     btnRest.addEventListener("click", () => startRestTimer(ex.restSec));
   }
 
-  // 세트 삭제 이벤트 위임
+  // 드롭다운 변경 및 인터랙션 핸들러
   if (rowsContainer) {
+    // 1. 드롭다운 변경 시: 자동완료 & 동기화 & 자동저장!
+    rowsContainer.addEventListener("change", (e) => {
+      const selectEl = e.target.closest(".set-select");
+      if (!selectEl) return;
+      const row = selectEl.closest(".set-row");
+      if (!row) return;
+
+      // 해당 세트 완료 표시
+      row.classList.add("completed");
+      const statusBtn = row.querySelector(".set-status-btn");
+      if (statusBtn) statusBtn.classList.add("completed");
+      const icon = row.querySelector(".set-status-icon");
+      if (icon) icon.textContent = "✔";
+
+      // 이후 미완료 세트에 값 자동 동기화 (1세트 선택 시 2, 3세트 자동 동기화)
+      const allRows = Array.from(rowsContainer.querySelectorAll(".set-row"));
+      const currentIdx = allRows.indexOf(row);
+      const wSelect = row.querySelector(".set-weight-select");
+      const rSelect = row.querySelector(".set-reps-select");
+      const currentW = wSelect ? wSelect.value : 0;
+      const currentR = rSelect ? rSelect.value : 10;
+
+      for (let i = currentIdx + 1; i < allRows.length; i++) {
+        const nextRow = allRows[i];
+        if (!nextRow.classList.contains("completed")) {
+          const nextW = nextRow.querySelector(".set-weight-select");
+          const nextR = nextRow.querySelector(".set-reps-select");
+          if (nextW && wSelect) nextW.value = currentW;
+          if (nextR && rSelect) nextR.value = currentR;
+        }
+      }
+
+      autoSaveExerciseSets(ex, rowsContainer);
+    });
+
+    // 2. 세트 상태 버튼(완료 토글) 및 세트 삭제(✕)
     rowsContainer.addEventListener("click", (e) => {
+      // 세트 상태 버튼 토글
+      const statusBtn = e.target.closest(".set-status-btn");
+      if (statusBtn) {
+        const row = statusBtn.closest(".set-row");
+        if (row) {
+          const isDone = row.classList.toggle("completed");
+          statusBtn.classList.toggle("completed", isDone);
+          const icon = statusBtn.querySelector(".set-status-icon");
+          if (icon) icon.textContent = isDone ? "✔" : "";
+          autoSaveExerciseSets(ex, rowsContainer);
+        }
+        return;
+      }
+
+      // 세트 삭제 (✕)
       if (e.target.closest(".btn-del-set")) {
         const row = e.target.closest(".set-row");
         if (row) {
           row.remove();
           const remaining = rowsContainer.querySelectorAll(".set-row");
           if (remaining.length === 0) {
-            const newRow = document.createElement("div");
-            newRow.className = "set-row";
-            newRow.innerHTML = `
-              <span class="set-num-badge">1세트</span>
-              <div class="set-input-group">
-                <input type="number" class="input-set-number set-weight-input" value="20" min="0" max="999" step="2.5" inputmode="decimal">
-                <span class="set-unit">kg</span>
-              </div>
-              <span class="set-times">×</span>
-              <div class="set-input-group">
-                <input type="number" class="input-set-number set-reps-input" value="10" min="1" max="999" step="1" inputmode="numeric">
-                <span class="set-unit">회</span>
-              </div>
-              <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
-            `;
-            rowsContainer.appendChild(newRow);
+            const newRowHtml = createSetRowHtml(1, ex.isBodyweight ? 0 : 20, 10, ex.isBodyweight, false);
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = newRowHtml.trim();
+            rowsContainer.appendChild(tempDiv.firstChild);
           } else {
             remaining.forEach((r, idx) => {
-              const badge = r.querySelector(".set-num-badge");
-              if (badge) badge.textContent = `${idx + 1}세트`;
+              const numText = r.querySelector(".set-num-text");
+              if (numText) numText.textContent = `${idx + 1}세트`;
+              r.setAttribute("data-set", idx + 1);
             });
           }
+          autoSaveExerciseSets(ex, rowsContainer);
         }
       }
     });
@@ -814,70 +975,37 @@ function createExerciseCardElement(ex) {
     btnAddSet.addEventListener("click", () => {
       const remaining = rowsContainer.querySelectorAll(".set-row");
       const nextSetNum = remaining.length + 1;
-      let lastWeight = 20;
+      let lastWeight = ex.isBodyweight ? 0 : 20;
       let lastReps = 10;
+
       if (remaining.length > 0) {
         const lastRow = remaining[remaining.length - 1];
-        const wInput = lastRow.querySelector(".set-weight-input");
-        const rInput = lastRow.querySelector(".set-reps-input");
-        if (wInput) lastWeight = parseFloat(wInput.value) || 20;
-        if (rInput) lastReps = parseInt(rInput.value, 10) || 10;
+        const wSelect = lastRow.querySelector(".set-weight-select");
+        const rSelect = lastRow.querySelector(".set-reps-select");
+        if (wSelect) lastWeight = parseFloat(wSelect.value) || 20;
+        if (rSelect) lastReps = parseInt(rSelect.value, 10) || 10;
       }
-      const newRow = document.createElement("div");
-      newRow.className = "set-row";
-      newRow.innerHTML = `
-        <span class="set-num-badge">${nextSetNum}세트</span>
-        <div class="set-input-group">
-          <input type="number" class="input-set-number set-weight-input" value="${lastWeight}" min="0" max="999" step="2.5" inputmode="decimal">
-          <span class="set-unit">kg</span>
-        </div>
-        <span class="set-times">×</span>
-        <div class="set-input-group">
-          <input type="number" class="input-set-number set-reps-input" value="${lastReps}" min="1" max="999" step="1" inputmode="numeric">
-          <span class="set-unit">회</span>
-        </div>
-        <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
-      `;
-      rowsContainer.appendChild(newRow);
+
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = createSetRowHtml(nextSetNum, lastWeight, lastReps, ex.isBodyweight, false).trim();
+      rowsContainer.appendChild(tempDiv.firstChild);
+      autoSaveExerciseSets(ex, rowsContainer);
     });
   }
 
-  // 세트 기록 수집 및 완료 처리 함수
+  // 완료 및 저장
   const saveAndComplete = () => {
     if (isSetTrackable && rowsContainer) {
-      const rows = rowsContainer.querySelectorAll(".set-row");
-      const sets = [];
-      let maxWeight = 0;
-      let totalVolume = 0;
-
-      rows.forEach((r, idx) => {
-        const w = parseFloat(r.querySelector(".set-weight-input").value) || 0;
-        const reps = parseInt(r.querySelector(".set-reps-input").value, 10) || 0;
-        sets.push({ set: idx + 1, weight: w, reps: reps });
-        if (w > maxWeight) maxWeight = w;
-        totalVolume += (w * reps);
+      // 모든 세트를 완료로 표시
+      rowsContainer.querySelectorAll(".set-row").forEach(r => {
+        r.classList.add("completed");
+        const statusBtn = r.querySelector(".set-status-btn");
+        if (statusBtn) statusBtn.classList.add("completed");
+        const icon = r.querySelector(".set-status-icon");
+        if (icon) icon.textContent = "✔";
       });
-
-      const logData = {
-        date: AppState.todayDateStr,
-        sets: sets,
-        maxWeight: maxWeight,
-        totalVolume: totalVolume
-      };
-
-      // 기구별 직전 수행 기록 캐시
-      AppState.lastExerciseLogs[ex.name] = logData;
-      saveLastExerciseLogs();
-
-      // 오늘 달력 데이터에 exerciseLogs 업데이트
-      const todayStr = AppState.todayDateStr;
-      const curRecord = AppState.calendarData[todayStr] || {};
-      const exerciseLogs = curRecord.exerciseLogs || {};
-      exerciseLogs[ex.name] = logData;
-      curRecord.exerciseLogs = exerciseLogs;
-      AppState.calendarData[todayStr] = curRecord;
+      autoSaveExerciseSets(ex, rowsContainer);
     }
-
     dismissCardAndComplete(card, ex);
   };
 
@@ -910,7 +1038,12 @@ function createCompletedRowElement(ex) {
 
   let setsSummaryHtml = "";
   if (log && log.sets && log.sets.length > 0) {
-    setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg)</div>`;
+    if (log.isBodyweight || ex.isBodyweight) {
+      const maxReps = Math.max(...log.sets.map(s => s.reps));
+      setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (최고 ${maxReps}회 | 맨몸)</div>`;
+    } else {
+      setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg)</div>`;
+    }
   }
 
   row.innerHTML = `
@@ -994,7 +1127,7 @@ function renderCalendar() {
     grid.appendChild(emptyCell);
   }
 
-  // 1일부터 말일까지 채우기
+  // 1일부터 말일까지 채우기 (모바일 핏 컴팩트 레이아웃)
   for (let d = 1; d <= lastDate; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const cell = document.createElement("div");
@@ -1013,22 +1146,21 @@ function renderCalendar() {
     let badgeHtml = "";
     let volumeBadgeHtml = "";
     let memoIcon = "";
-    let memoPreview = "";
 
     if (record) {
       if (record.statusText) {
         const badgeClass = record.badgeClass || (record.doneCount > 0 && record.doneCount === record.totalCount ? "all-done" : "part-done");
-        badgeHtml = `<div class="cal-status-badge ${badgeClass}">${escapeHtml(record.statusText)}</div>`;
+        const shortName = record.mainPart || "운동";
+        badgeHtml = `<span class="cal-mini-badge ${badgeClass}">${escapeHtml(shortName)}</span>`;
       }
       if (record.totalVolume && record.totalVolume > 0) {
         const volStr = record.totalVolume >= 1000
-          ? (record.totalVolume / 1000).toFixed(1) + "톤"
-          : record.totalVolume.toLocaleString() + "kg";
-        volumeBadgeHtml = `<div class="cal-volume-badge" title="당일 총 볼륨: ${record.totalVolume.toLocaleString()}kg">🏋️ ${volStr}</div>`;
+          ? (record.totalVolume / 1000).toFixed(1) + "t"
+          : record.totalVolume.toLocaleString() + "k";
+        volumeBadgeHtml = `<span class="cal-mini-vol">${volStr}</span>`;
       }
       if (record.memo && record.memo.trim().length > 0) {
         memoIcon = "📝";
-        memoPreview = `<div class="cal-memo-preview">${escapeHtml(record.memo)}</div>`;
       }
     }
 
@@ -1039,9 +1171,10 @@ function renderCalendar() {
           <span>${memoIcon}</span>
         </div>
       </div>
-      ${badgeHtml}
-      ${volumeBadgeHtml}
-      ${memoPreview}
+      <div class="cal-cell-body">
+        ${badgeHtml}
+        ${volumeBadgeHtml}
+      </div>
     `;
 
     // 셀 클릭 시 해당 날짜 선택
@@ -1107,12 +1240,21 @@ function renderSelectedDateDetail() {
       cardsHtml += record.completedItems.map(item => {
         const log = exerciseLogs[item];
         if (log && log.sets && log.sets.length > 0) {
-          const setsList = log.sets.map(s => `<span class="set-chip">${s.set}세트: ${s.weight}kg×${s.reps}회</span>`).join("");
+          const isBody = Boolean(log.isBodyweight);
+          const setsList = log.sets.map(s => {
+            const setVal = isBody ? `${s.reps}회` : `${s.weight}kg×${s.reps}회`;
+            return `<span class="set-chip">${s.set}세트: ${setVal}</span>`;
+          }).join("");
+          const maxReps = Math.max(...log.sets.map(s => s.reps));
+          const metricStr = isBody 
+            ? `최고 ${maxReps}회 | 맨몸` 
+            : `최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg`;
+
           return `
             <div class="workout-detail-card">
               <div class="workout-detail-title-row">
                 <span class="workout-detail-name">⚡ ${escapeHtml(item)}</span>
-                <span class="workout-detail-metrics">최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg</span>
+                <span class="workout-detail-metrics">${metricStr}</span>
               </div>
               <div class="workout-detail-sets-list">${setsList}</div>
             </div>
@@ -1488,7 +1630,8 @@ function renderChartView() {
           "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",
           "뉴텍 레그 익스텐션",
           "뉴텍 라잉 레그 컬",
-          "뉴텍 힙 어덕션 / 어브덕션 (or 링크 아웃타이)",
+          "뉴텍 힙 어덕션 (허벅지 안쪽 모으는)",
+          "뉴텍 힙 어브덕션 (엉덩이 바깥쪽 벌리는)",
           "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
           "백익스텐션 (허리 기립근 & 둔근)"
         ]
@@ -1510,10 +1653,12 @@ function renderChartView() {
         ]
       },
       {
-        category: "어깨 & 복근",
+        category: "어깨 & 복근/옆구리",
         items: [
           "뉴텍 숄더프레스 (핀머신)",
           "뉴텍 사이드 레터럴 레이즈 (핀머신)",
+          "복근운동 - 누워서 다리들기 (레그레이즈)",
+          "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
           "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",
           "원암 덤벨 사이드 벤드 (덤벨존 활용)"
         ]

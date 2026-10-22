@@ -981,26 +981,29 @@ body {
   color: #60a5fa;
 }
 
-/* 날짜 그리드 */
+/* 날짜 그리드 (모바일 핏 컴팩트 디자인) */
 .cal-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .cal-day-cell {
   background-color: rgba(15, 23, 42, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-sm);
-  min-height: 72px;
-  padding: 5px;
+  height: 50px;
+  min-height: 50px;
+  max-height: 54px;
+  padding: 3px 4px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 3px;
+  justify-content: space-between;
   cursor: pointer;
   position: relative;
+  overflow: hidden;
   transition: all 0.2s;
+  box-sizing: border-box;
 }
 
 .cal-day-cell:hover {
@@ -1016,24 +1019,26 @@ body {
 
 .cal-day-cell.today {
   border: 1.5px solid var(--accent-amber);
-  background: rgba(245, 158, 11, 0.05);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.25);
 }
 
 .cal-day-cell.selected {
-  background: rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.22);
   border-color: var(--accent-blue);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
 }
 
 .cal-cell-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 14px;
+  line-height: 1;
 }
 
 .cal-day-num {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--text-muted);
 }
@@ -1045,76 +1050,77 @@ body {
 .cal-cell-icons {
   display: flex;
   gap: 2px;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1;
 }
 
-/* 달력 셀 상태 뱃지 (모두 완료, 6/8 완료 등) */
-.cal-status-badge {
-  font-size: 10px;
+/* 달력 셀 바디 & 컴팩트 미니 뱃지 */
+.cal-cell-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  width: 100%;
+  overflow: hidden;
+  height: 20px;
+}
+
+.cal-mini-badge {
+  font-size: 9px;
   font-weight: 800;
-  padding: 3px 4px;
+  padding: 2px 4px;
   border-radius: 4px;
   text-align: center;
-  line-height: 1.1;
+  line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  max-width: 65%;
+  flex-shrink: 1;
 }
 
-.cal-status-badge.all-done {
+.cal-mini-badge.all-done {
   background-color: #059669;
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.4);
 }
 
-.cal-status-badge.part-done {
+.cal-mini-badge.part-done {
   background-color: #0284c7;
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.4);
 }
 
-/* 지능형 부위별 뱃지 색상 */
-.cal-status-badge.badge-lower {
+.cal-mini-badge.badge-lower {
   background: linear-gradient(135deg, #ea580c, #c2410c);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.4);
 }
 
-.cal-status-badge.badge-upper {
+.cal-mini-badge.badge-upper {
   background: linear-gradient(135deg, #059669, #047857);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.4);
 }
 
-.cal-status-badge.badge-cardio {
+.cal-mini-badge.badge-cardio {
   background: linear-gradient(135deg, #0284c7, #0369a1);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.4);
 }
 
-.cal-status-badge.badge-recovery {
+.cal-mini-badge.badge-recovery {
   background: linear-gradient(135deg, #7c3aed, #6d28d9);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.4);
 }
 
-.cal-status-badge.badge-fullbody {
+.cal-mini-badge.badge-fullbody {
   background: linear-gradient(135deg, #db2777, #be185d);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(219, 39, 119, 0.4);
 }
 
-.cal-memo-preview {
+.cal-mini-vol {
   font-size: 9px;
-  color: #cbd5e1;
-  background-color: rgba(0, 0, 0, 0.3);
-  padding: 2px 4px;
-  border-radius: 3px;
+  font-weight: 800;
+  color: #fbbf24;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: auto;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 /* 범례 */
@@ -1977,70 +1983,120 @@ body {
 .set-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background-color: rgba(23, 32, 51, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 6px 8px;
   border-radius: var(--radius-sm);
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
 
 .set-row:hover {
   border-color: rgba(56, 189, 248, 0.3);
 }
 
-.set-num-badge {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--accent-blue);
-  min-width: 42px;
-  text-align: center;
+/* 완료된 세트 (색상 변경 및 에메랄드 발광) */
+.set-row.completed {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
 }
 
-.set-input-group {
+.set-status-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
+  background-color: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  user-select: none;
 }
 
-.input-set-number {
-  width: 58px;
-  background-color: #090d16;
-  border: 1px solid var(--border-color);
+.set-status-btn:hover {
+  border-color: var(--accent-blue);
   color: #fff;
-  border-radius: 6px;
-  padding: 5px 6px;
+}
+
+.set-status-btn.completed {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+.set-status-icon {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* 드롭다운 셀렉트 그룹 */
+.set-select-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.set-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #0b1220;
+  border: 1.5px solid #334155;
+  color: #f8fafc;
   font-size: 13px;
   font-weight: 700;
-  text-align: center;
+  padding: 6px 22px 6px 9px;
+  border-radius: 6px;
+  cursor: pointer;
   font-family: inherit;
-  font-variant-numeric: tabular-nums;
-  -moz-appearance: textfield;
+  transition: all 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338bdf8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 11px;
 }
 
-.input-set-number::-webkit-outer-spin-button,
-.input-set-number::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.input-set-number:focus {
+.set-select:focus {
   outline: none;
-  border-color: var(--accent-green);
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
 }
 
-.set-unit {
+.set-row.completed .set-select {
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #34d399;
+}
+
+/* 맨몸운동 태그 및 레이아웃 */
+.bodyweight-pill {
   font-size: 11px;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin-right: 4px;
+  font-weight: 800;
+  background-color: rgba(56, 189, 248, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.reps-group.full-reps .set-select {
+  padding-left: 14px;
+  padding-right: 26px;
 }
 
 .set-times {
   font-size: 12px;
   color: var(--text-dim);
-  margin: 0 2px;
+  margin: 0 1px;
 }
 
 .btn-del-set {
@@ -2470,3 +2526,94 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* ==============================================================
+   === 모바일 전용 반응형 미디어 쿼리 (스마트폰 한 화면 핏) ===
+   ============================================================== */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 0 10px 80px 10px;
+  }
+
+  .header-inner {
+    padding: 12px 2px 8px 2px;
+  }
+
+  /* 달력 모바일 한 화면 핏 */
+  .cal-dashboard-card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cal-guide-alert {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+
+  .cal-stats-summary {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .cal-stat-box {
+    padding: 8px 6px;
+  }
+
+  .cal-stat-num {
+    font-size: 15px;
+  }
+
+  .cal-days-grid {
+    gap: 3px;
+  }
+
+  .cal-day-cell {
+    height: 48px;
+    min-height: 48px;
+    max-height: 50px;
+    padding: 2px 3px;
+  }
+
+  .cal-day-num {
+    font-size: 10.5px;
+  }
+
+  .cal-mini-badge {
+    font-size: 8.5px;
+    padding: 1px 3px;
+  }
+
+  .cal-mini-vol {
+    font-size: 8.5px;
+  }
+
+  /* 세트 로거 드롭다운 모바일 핏 */
+  .set-row {
+    padding: 5px 6px;
+    gap: 4px;
+  }
+
+  .set-status-btn {
+    padding: 4px 6px;
+    font-size: 10.5px;
+  }
+
+  .set-select {
+    padding: 5px 18px 5px 6px;
+    font-size: 12px;
+    background-size: 10px;
+    background-position: right 4px center;
+  }
+
+  .bodyweight-pill {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .btn-del-set {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+}
+
