@@ -32,6 +32,10 @@
           </div>
         </div>
         <div class="header-actions">
+          <button id="btnBackupModal" class="btn-icon-label" title="데이터 이동 / 백업">
+            <span class="icon">📲</span>
+            <span class="label">데이터 이동</span>
+          </button>
           <button id="btnQuickRest" class="btn-icon-label" title="휴식 타이머">
             <span class="icon">⏱️</span>
             <span class="label">휴식 60초</span>
@@ -211,6 +215,9 @@
               <span class="stat-val" id="calTotalMemoCount">0개</span>
               <span class="stat-lbl">작성된 메모</span>
             </div>
+          <div class="cal-sync-hint">
+            <span>💡 삼성 인터넷 ↔ 크롬 등 다른 브라우저로 기록 옮기기:</span>
+            <button id="btnCalBackupLink" class="btn-cal-sync-link" type="button">데이터 이동 📲</button>
           </div>
         </div>
 
@@ -456,6 +463,47 @@
             <span class="yt-play-icon">▶</span> 유튜브 한국어 운동법 영상 (조회수순)
           </a>
           <button id="btnModalConfirm" class="btn btn-outline btn-block" style="margin-top: 8px;">닫기</button>
+        </div>
+    </div>
+
+    <!-- 데이터 백업 & 브라우저/기기 이동 모달 -->
+    <div id="backupModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+      <div class="modal-card backup-modal-card">
+        <button id="btnCloseBackupModal" class="btn-close-modal" aria-label="닫기">✕</button>
+        <div class="modal-body backup-modal-body">
+          <div class="modal-meta">
+            <span class="badge-cat" style="background:#0284c7; color:#fff;">기기/브라우저 연동</span>
+          </div>
+          <h3 class="modal-title" style="margin-bottom: 8px;">📲 데이터 이동 & 백업</h3>
+          
+          <div class="backup-guide-box">
+            <p>💡 <strong>삼성 인터넷 ↔ 크롬 데이터 이동 안내</strong></p>
+            <p>브라우저 앱마다 저장소가 완전히 분리되어 있습니다. 기존에 쓰시던 브라우저(예: 삼성 인터넷)에서 <strong>[데이터 복사]</strong> 후 새 브라우저(예: 크롬)에서 <strong>[붙여넣고 적용]</strong>하시면 모든 운동 일지와 세트 기록이 그대로 복사됩니다!</p>
+          </div>
+
+          <div class="backup-action-group">
+            <h4 class="backup-sub-title">1. 기존 브라우저에서 (데이터 복사 / 내보내기)</h4>
+            <button id="btnCopyData" type="button" class="btn btn-primary btn-block">
+              📋 현재 운동 데이터 클립보드에 복사
+            </button>
+            <button id="btnDownloadData" type="button" class="btn btn-outline btn-block" style="margin-top: 6px;">
+              💾 백업 파일(.json) 다운로드
+            </button>
+          </div>
+
+          <div class="backup-action-group" style="margin-top: 18px;">
+            <h4 class="backup-sub-title">2. 새 브라우저에서 (데이터 붙여넣기 / 복원)</h4>
+            <textarea id="importTextarea" class="backup-textarea" placeholder="복사한 데이터 코드를 여기에 길게 눌러 붙여넣으세요..."></textarea>
+            <button id="btnApplyImport" type="button" class="btn btn-secondary btn-block" style="margin-top: 6px;">
+              📥 붙여넣은 데이터 적용하기
+            </button>
+            <div style="margin-top: 8px; text-align: center;">
+              <input type="file" id="importFileInput" accept=".json" class="hidden">
+              <button id="btnTriggerFileInput" class="btn-text-sm" type="button">
+                📂 백업 파일(.json) 직접 불러오기
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

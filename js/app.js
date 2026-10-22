@@ -506,6 +506,90 @@ function bindEvents() {
       if (chartExerciseSelect) renderExerciseChart(chartExerciseSelect.value);
     });
   }
+
+  // 14. 데이터 이동 & 백업 모달 바인딩
+  const btnBackupModal = document.getElementById("btnBackupModal");
+  const btnCalBackupLink = document.getElementById("btnCalBackupLink");
+  const btnCloseBackupModal = document.getElementById("btnCloseBackupModal");
+  const backupModalOverlay = document.getElementById("backupModal");
+
+  if (btnBackupModal) btnBackupModal.addEventListener("click", openBackupModal);
+  if (btnCalBackupLink) btnCalBackupLink.addEventListener("click", openBackupModal);
+  if (btnCloseBackupModal) btnCloseBackupModal.addEventListener("click", closeBackupModal);
+  if (backupModalOverlay) {
+    backupModalOverlay.addEventListener("click", (e) => {
+      if (e.target === backupModalOverlay) closeBackupModal();
+    });
+  }
+
+  // 1) 클립보드 복사
+  const btnCopyData = document.getElementById("btnCopyData");
+  if (btnCopyData) {
+    btnCopyData.addEventListener("click", async () => {
+      const dataStr = exportAllHealthData();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(dataStr);
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = dataStr;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        alert("✅ 운동 데이터가 클립보드에 복사되었습니다!\n\n크롬이나 다른 기기에서 '2. 새 브라우저에서 붙여넣은 데이터 적용하기'를 실행하시면 즉시 연동됩니다.");
+      } catch (err) {
+        const importTa = document.getElementById("importTextarea");
+        if (importTa) {
+          importTa.value = dataStr;
+          importTa.select();
+          alert("데이터 코드가 아래 텍스트 상자에 생성되었습니다. 전체 선택 후 복사해주세요.");
+        }
+      }
+    });
+  }
+
+  // 2) 백업 파일 다운로드
+  const btnDownloadData = document.getElementById("btnDownloadData");
+  if (btnDownloadData) {
+    btnDownloadData.addEventListener("click", () => {
+      const dataStr = exportAllHealthData();
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `myHealth_backup_${AppState.todayDateStr}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  // 3) 붙여넣은 텍스트 데이터 적용
+  const btnApplyImport = document.getElementById("btnApplyImport");
+  const importTextarea = document.getElementById("importTextarea");
+  if (btnApplyImport && importTextarea) {
+    btnApplyImport.addEventListener("click", () => {
+      importAllHealthData(importTextarea.value);
+    });
+  }
+
+  // 4) 백업 파일 직접 불러오기
+  const btnTriggerFileInput = document.getElementById("btnTriggerFileInput");
+  const importFileInput = document.getElementById("importFileInput");
+  if (btnTriggerFileInput && importFileInput) {
+    btnTriggerFileInput.addEventListener("click", () => importFileInput.click());
+    importFileInput.addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        importAllHealthData(evt.target.result);
+        importFileInput.value = "";
+      };
+      reader.readAsText(file);
+    });
+  }
 }
 
 // 요일 개별 선택 함수 (월/화/수/목/금/토/일)
@@ -1948,41 +2032,99 @@ function renderExerciseChart(exerciseName) {
   }
 }
 
-// === 7. 데이터 백업 & 복원 ===
-function exportDataAsJson() {
-  const data = {
-    exportedAt: new Date().toISOString(),
-    calendarData: AppState.calendarData,
-    currentDayDone: Array.from(AppState.completedExerciseIds)
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `myHealth_calendar_backup_${AppState.todayDateStr}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+// === 7. 데이터 백업 & 브라우저 간 이동 ===
+function openBackupModal() {
+  const modal = document.getElementById("backupModal");
+  if (modal) {
+    modal.classList.remove("hidden");
+  }
 }
 
-function importDataFromJson(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (data.calendarData && typeof data.calendarData === 'object') {
-        AppState.calendarData = data.calendarData;
-        saveCalendarData();
-        alert("달력 운동 기록과 메모를 성공적으로 복원했습니다!");
-        renderCalendar();
-        renderSelectedDateDetail();
-      } else {
-        alert("올바르지 않은 백업 파일 형식입니다.");
-      }
-    } catch (err) {
-      alert("파일을 읽는 도중 오류가 발생했습니다.");
-    }
+function closeBackupModal() {
+  const modal = document.getElementById("backupModal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+}
+
+function exportAllHealthData() {
+  const exportObj = {
+    app: "myHealth",
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    calendarData: AppState.calendarData || {},
+    lastExerciseLogs: AppState.lastExerciseLogs || {},
+    dailyDones: {}
   };
-  reader.readAsText(file);
+
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("myhealth_done_")) {
+        try {
+          exportObj.dailyDones[key] = JSON.parse(localStorage.getItem(key));
+        } catch (e) {
+          exportObj.dailyDones[key] = localStorage.getItem(key);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Storage export warn:", err);
+  }
+
+  return JSON.stringify(exportObj, null, 2);
+}
+
+function importAllHealthData(jsonStr) {
+  if (!jsonStr || !jsonStr.trim()) {
+    alert("데이터 코드를 먼저 붙여넣어 주세요.");
+    return false;
+  }
+
+  try {
+    const data = JSON.parse(jsonStr.trim());
+    if (!data || typeof data !== "object") {
+      alert("올바르지 않은 데이터 형식입니다.");
+      return false;
+    }
+
+    // 1. 달력 데이터 병합
+    if (data.calendarData && typeof data.calendarData === "object") {
+      AppState.calendarData = { ...AppState.calendarData, ...data.calendarData };
+      saveCalendarData();
+    }
+
+    // 2. 기구별 직전 수행 세트 기록 병합
+    if (data.lastExerciseLogs && typeof data.lastExerciseLogs === "object") {
+      AppState.lastExerciseLogs = { ...AppState.lastExerciseLogs, ...data.lastExerciseLogs };
+      saveLastExerciseLogs();
+    }
+
+    // 3. 일별 완료 목록 복원
+    if (data.dailyDones && typeof data.dailyDones === "object") {
+      Object.keys(data.dailyDones).forEach(k => {
+        const val = data.dailyDones[k];
+        const valStr = typeof val === "string" ? val : JSON.stringify(val);
+        localStorage.setItem(k, valStr);
+      });
+      // 오늘 날짜 세트도 즉시 다시 로드
+      const todayDone = localStorage.getItem(`myhealth_done_${AppState.todayDateStr}`);
+      if (todayDone) {
+        try {
+          AppState.completedExerciseIds = new Set(JSON.parse(todayDone));
+        } catch (e) {}
+      }
+    }
+
+    alert("🎉 데이터 복원이 성공적으로 완료되었습니다!\n운동 기록과 달력이 즉시 갱신됩니다.");
+    closeBackupModal();
+    renderApp();
+    return true;
+  } catch (err) {
+    console.error("Import error:", err);
+    alert("데이터를 해석하는 도중 오류가 발생했습니다. 올바른 백업 코드인지 확인해주세요.");
+    return false;
+  }
 }
 
 function escapeHtml(str) {
