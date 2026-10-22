@@ -637,41 +637,107 @@ function renderRoutineView() {
   }
 }
 
-// 무게 드롭다운 옵션 생성 (5kg 단위: 0~200kg)
-function buildWeightSelectOptions(selectedWeight, isBodyweight) {
-  if (isBodyweight) return "";
-  const selNum = parseFloat(selectedWeight) || 0;
-  const weights = [];
-  for (let w = 0; w <= 200; w += 5) {
-    weights.push(w);
+// 전역 커스텀 인라인 드롭다운 팝오버 관리
+let activeCustomDropdown = null;
+
+function closeCustomDropdown() {
+  if (activeCustomDropdown) {
+    activeCustomDropdown.remove();
+    activeCustomDropdown = null;
   }
-  if (selNum > 0 && !weights.includes(selNum)) {
-    weights.push(selNum);
-    weights.sort((a, b) => a - b);
-  }
-  return weights.map(w => {
-    const isSel = (w === selNum) ? "selected" : "";
-    return `<option value="${w}" ${isSel}>${w} kg</option>`;
-  }).join("");
 }
 
-// 횟수 드롭다운 옵션 생성 (1회 단위: 1~50회)
-function buildRepsSelectOptions(selectedReps) {
-  const selNum = parseInt(selectedReps, 10) || 12;
-  const repsList = [];
-  for (let r = 1; r <= 50; r++) {
-    repsList.push(r);
+// 화면 다른 곳을 터치하면 열려있는 커스텀 드롭다운 닫기
+document.addEventListener("pointerdown", (e) => {
+  if (activeCustomDropdown && !e.target.closest(".custom-dropdown-popover") && !e.target.closest(".set-picker-trigger")) {
+    closeCustomDropdown();
   }
-  if (selNum > 50 && !repsList.includes(selNum)) {
-    repsList.push(selNum);
+});
+
+// 화면 스크롤 시 열려있는 팝오버 닫기
+window.addEventListener("scroll", () => {
+  if (activeCustomDropdown) {
+    closeCustomDropdown();
   }
-  return repsList.map(r => {
-    const isSel = (r === selNum) ? "selected" : "";
-    return `<option value="${r}" ${isSel}>${r} 회</option>`;
+}, { passive: true });
+
+// 커스텀 드롭다운 열기 (모바일 OS 피커창/완료버튼 없이 페이지 내에서 바로 선택!)
+function openCustomDropdown(triggerBtn, type, currentVal, onSelect) {
+  if (activeCustomDropdown && activeCustomDropdown._trigger === triggerBtn) {
+    closeCustomDropdown();
+    return;
+  }
+  closeCustomDropdown();
+
+  const popover = document.createElement("div");
+  popover.className = "custom-dropdown-popover";
+  popover._trigger = triggerBtn;
+
+  let options = [];
+  if (type === "weight") {
+    for (let w = 0; w <= 160; w += 5) options.push(w);
+    const num = parseFloat(currentVal) || 0;
+    if (num > 0 && !options.includes(num)) {
+      options.push(num);
+      options.sort((a, b) => a - b);
+    }
+  } else {
+    for (let r = 1; r <= 35; r++) options.push(r);
+    options.push(40, 50);
+    const num = parseInt(currentVal, 10) || 10;
+    if (num > 0 && !options.includes(num)) {
+      options.push(num);
+      options.sort((a, b) => a - b);
+    }
+  }
+
+  const unitStr = (type === "weight") ? "kg" : "회";
+  popover.innerHTML = options.map(val => {
+    const isSel = (Number(val) === Number(currentVal));
+    return `
+      <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" data-val="${val}">
+        <span>${val} ${unitStr}</span>
+        ${isSel ? '<span class="item-check">✔</span>' : ''}
+      </div>
+    `;
   }).join("");
+
+  document.body.appendChild(popover);
+  activeCustomDropdown = popover;
+
+  // 트리거 버튼 위치 기준 팝오버 배치
+  const rect = triggerBtn.getBoundingClientRect();
+  const popoverW = 115;
+  let left = rect.left + window.scrollX;
+  if (left + popoverW > window.innerWidth - 8) {
+    left = window.innerWidth - popoverW - 8;
+  }
+  let top = rect.bottom + window.scrollY + 4;
+  if (rect.bottom + 230 > window.innerHeight && rect.top > 230) {
+    top = rect.top + window.scrollY - 224;
+  }
+
+  popover.style.left = `${Math.max(8, left)}px`;
+  popover.style.top = `${top}px`;
+  popover.style.minWidth = `${Math.max(rect.width, 100)}px`;
+
+  // 현재 선택된 값으로 스크롤 이동
+  const selItem = popover.querySelector(".custom-dropdown-item.selected");
+  if (selItem) {
+    selItem.scrollIntoView({ block: "center", behavior: "instant" });
+  }
+
+  // 항목 터치 시 즉시 선택 & 닫기 (완료 버튼 누를 필요 없음!)
+  popover.addEventListener("click", (e) => {
+    const item = e.target.closest(".custom-dropdown-item");
+    if (!item) return;
+    const selectedVal = item.getAttribute("data-val");
+    closeCustomDropdown();
+    onSelect(selectedVal);
+  });
 }
 
-// 세트 행 HTML 생성 헬퍼
+// 세트 행 HTML 생성 헬퍼 (커스텀 인라인 드롭다운 트리거 버튼 사용)
 function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
   const compClass = isCompleted ? "completed" : "";
   const checkIcon = isCompleted ? "✔" : "";
@@ -684,10 +750,11 @@ function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
           <span class="set-num-text">${setNumber}세트</span>
         </button>
         <span class="bodyweight-pill">맨몸</span>
-        <div class="set-select-group reps-group full-reps">
-          <select class="set-select set-reps-select" aria-label="${setNumber}세트 횟수">
-            ${buildRepsSelectOptions(reps)}
-          </select>
+        <div class="set-picker-wrap reps-wrap full-reps">
+          <button type="button" class="set-picker-trigger reps-trigger" data-type="reps" data-val="${reps}" aria-label="${setNumber}세트 횟수">
+            <span class="picker-val">${reps}</span><span class="picker-unit">회</span>
+            <span class="picker-arrow">▾</span>
+          </button>
         </div>
         <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
       </div>
@@ -699,16 +766,18 @@ function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
           <span class="set-status-icon">${checkIcon}</span>
           <span class="set-num-text">${setNumber}세트</span>
         </button>
-        <div class="set-select-group weight-group">
-          <select class="set-select set-weight-select" aria-label="${setNumber}세트 무게">
-            ${buildWeightSelectOptions(weight, false)}
-          </select>
+        <div class="set-picker-wrap weight-wrap">
+          <button type="button" class="set-picker-trigger weight-trigger" data-type="weight" data-val="${weight}" aria-label="${setNumber}세트 무게">
+            <span class="picker-val">${weight}</span><span class="picker-unit">kg</span>
+            <span class="picker-arrow">▾</span>
+          </button>
         </div>
         <span class="set-times">×</span>
-        <div class="set-select-group reps-group">
-          <select class="set-select set-reps-select" aria-label="${setNumber}세트 횟수">
-            ${buildRepsSelectOptions(reps)}
-          </select>
+        <div class="set-picker-wrap reps-wrap">
+          <button type="button" class="set-picker-trigger reps-trigger" data-type="reps" data-val="${reps}" aria-label="${setNumber}세트 횟수">
+            <span class="picker-val">${reps}</span><span class="picker-unit">회</span>
+            <span class="picker-arrow">▾</span>
+          </button>
         </div>
         <button type="button" class="btn-del-set" title="이 세트 삭제">✕</button>
       </div>
@@ -725,10 +794,10 @@ function autoSaveExerciseSets(ex, rowsContainer) {
   let totalVolume = 0;
 
   rows.forEach((r, idx) => {
-    const wEl = r.querySelector(".set-weight-select");
-    const rEl = r.querySelector(".set-reps-select");
-    const w = wEl ? parseFloat(wEl.value) || 0 : 0;
-    const reps = rEl ? parseInt(rEl.value, 10) || 0 : 0;
+    const wBtn = r.querySelector(".weight-trigger");
+    const rBtn = r.querySelector(".reps-trigger");
+    const w = wBtn ? parseFloat(wBtn.getAttribute("data-val")) || 0 : 0;
+    const reps = rBtn ? parseInt(rBtn.getAttribute("data-val"), 10) || 0 : 0;
     const isCompleted = r.classList.contains("completed");
     sets.push({ set: idx + 1, weight: w, reps: reps, isCompleted: isCompleted });
     if (w > maxWeight) maxWeight = w;
@@ -819,7 +888,7 @@ function createExerciseCardElement(ex) {
     setLoggerHtml = `
       <div class="set-logger-wrap" id="logger_${ex.id}">
         <div class="set-logger-header">
-          <span class="set-logger-title">⚡ 세트별 기록 (드롭다운 터치)</span>
+          <span class="set-logger-title">⚡ 세트별 기록 (터치 시 즉시 선택)</span>
           <span class="prev-log-hint">${escapeHtml(prevHint)}</span>
         </div>
         <div class="set-rows-list" id="rows_${ex.id}">
@@ -893,46 +962,62 @@ function createExerciseCardElement(ex) {
     btnRest.addEventListener("click", () => startRestTimer(ex.restSec));
   }
 
-  // 드롭다운 변경 및 인터랙션 핸들러
+  // 커스텀 인라인 드롭다운 및 인터랙션 핸들러
   if (rowsContainer) {
-    // 1. 드롭다운 변경 시: 자동완료 & 동기화 & 자동저장!
-    rowsContainer.addEventListener("change", (e) => {
-      const selectEl = e.target.closest(".set-select");
-      if (!selectEl) return;
-      const row = selectEl.closest(".set-row");
-      if (!row) return;
+    rowsContainer.addEventListener("click", (e) => {
+      // 1. 커스텀 드롭다운 트리거 버튼 클릭 (무게 / 횟수)
+      const triggerBtn = e.target.closest(".set-picker-trigger");
+      if (triggerBtn) {
+        const type = triggerBtn.getAttribute("data-type");
+        const currentVal = triggerBtn.getAttribute("data-val");
+        const row = triggerBtn.closest(".set-row");
 
-      // 해당 세트 완료 표시
-      row.classList.add("completed");
-      const statusBtn = row.querySelector(".set-status-btn");
-      if (statusBtn) statusBtn.classList.add("completed");
-      const icon = row.querySelector(".set-status-icon");
-      if (icon) icon.textContent = "✔";
+        openCustomDropdown(triggerBtn, type, currentVal, (newVal) => {
+          // 버튼 UI 갱신
+          triggerBtn.setAttribute("data-val", newVal);
+          const valSpan = triggerBtn.querySelector(".picker-val");
+          if (valSpan) valSpan.textContent = newVal;
 
-      // 이후 미완료 세트에 값 자동 동기화 (1세트 선택 시 2, 3세트 자동 동기화)
-      const allRows = Array.from(rowsContainer.querySelectorAll(".set-row"));
-      const currentIdx = allRows.indexOf(row);
-      const wSelect = row.querySelector(".set-weight-select");
-      const rSelect = row.querySelector(".set-reps-select");
-      const currentW = wSelect ? wSelect.value : 0;
-      const currentR = rSelect ? rSelect.value : 10;
+          // 해당 세트 완료 표시
+          if (row) {
+            row.classList.add("completed");
+            const statusBtn = row.querySelector(".set-status-btn");
+            if (statusBtn) statusBtn.classList.add("completed");
+            const icon = row.querySelector(".set-status-icon");
+            if (icon) icon.textContent = "✔";
 
-      for (let i = currentIdx + 1; i < allRows.length; i++) {
-        const nextRow = allRows[i];
-        if (!nextRow.classList.contains("completed")) {
-          const nextW = nextRow.querySelector(".set-weight-select");
-          const nextR = nextRow.querySelector(".set-reps-select");
-          if (nextW && wSelect) nextW.value = currentW;
-          if (nextR && rSelect) nextR.value = currentR;
-        }
+            // 이후 미완료 세트에 값 자동 동기화 (1세트 선택 시 2, 3세트 자동 동기화)
+            const allRows = Array.from(rowsContainer.querySelectorAll(".set-row"));
+            const currentIdx = allRows.indexOf(row);
+
+            for (let i = currentIdx + 1; i < allRows.length; i++) {
+              const nextRow = allRows[i];
+              if (!nextRow.classList.contains("completed")) {
+                if (type === "weight") {
+                  const nextW = nextRow.querySelector(".weight-trigger");
+                  if (nextW) {
+                    nextW.setAttribute("data-val", newVal);
+                    const s = nextW.querySelector(".picker-val");
+                    if (s) s.textContent = newVal;
+                  }
+                } else if (type === "reps") {
+                  const nextR = nextRow.querySelector(".reps-trigger");
+                  if (nextR) {
+                    nextR.setAttribute("data-val", newVal);
+                    const s = nextR.querySelector(".picker-val");
+                    if (s) s.textContent = newVal;
+                  }
+                }
+              }
+            }
+          }
+
+          autoSaveExerciseSets(ex, rowsContainer);
+        });
+        return;
       }
 
-      autoSaveExerciseSets(ex, rowsContainer);
-    });
-
-    // 2. 세트 상태 버튼(완료 토글) 및 세트 삭제(✕)
-    rowsContainer.addEventListener("click", (e) => {
-      // 세트 상태 버튼 토글
+      // 2. 세트 상태 버튼 토글 (완료/미완료)
       const statusBtn = e.target.closest(".set-status-btn");
       if (statusBtn) {
         const row = statusBtn.closest(".set-row");
@@ -946,7 +1031,7 @@ function createExerciseCardElement(ex) {
         return;
       }
 
-      // 세트 삭제 (✕)
+      // 3. 세트 삭제 (✕)
       if (e.target.closest(".btn-del-set")) {
         const row = e.target.closest(".set-row");
         if (row) {
@@ -980,10 +1065,10 @@ function createExerciseCardElement(ex) {
 
       if (remaining.length > 0) {
         const lastRow = remaining[remaining.length - 1];
-        const wSelect = lastRow.querySelector(".set-weight-select");
-        const rSelect = lastRow.querySelector(".set-reps-select");
-        if (wSelect) lastWeight = parseFloat(wSelect.value) || 20;
-        if (rSelect) lastReps = parseInt(rSelect.value, 10) || 10;
+        const wTrigger = lastRow.querySelector(".weight-trigger");
+        const rTrigger = lastRow.querySelector(".reps-trigger");
+        if (wTrigger) lastWeight = parseFloat(wTrigger.getAttribute("data-val")) || 20;
+        if (rTrigger) lastReps = parseInt(rTrigger.getAttribute("data-val"), 10) || 10;
       }
 
       const tempDiv = document.createElement("div");
@@ -992,6 +1077,7 @@ function createExerciseCardElement(ex) {
       autoSaveExerciseSets(ex, rowsContainer);
     });
   }
+
 
   // 완료 및 저장
   const saveAndComplete = () => {

@@ -2038,15 +2038,15 @@ body {
   font-weight: 800;
 }
 
-/* 드롭다운 셀렉트 그룹 */
-.set-select-group {
-  display: flex;
+/* 커스텀 인라인 드롭다운 트리거 버튼 (모바일 OS 피커/완료버튼 없이 인라인 작동) */
+.set-picker-wrap {
+  display: inline-flex;
   align-items: center;
   position: relative;
   flex-shrink: 0;
 }
 
-.set-select {
+.set-picker-trigger {
   appearance: none;
   -webkit-appearance: none;
   background-color: #0b1220;
@@ -2054,26 +2054,134 @@ body {
   color: #f8fafc;
   font-size: 13px;
   font-weight: 700;
-  padding: 6px 22px 6px 9px;
+  padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
   font-family: inherit;
   transition: all 0.2s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2338bdf8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  background-size: 11px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.set-select:focus {
+.set-picker-trigger:hover,
+.set-picker-trigger:focus {
   outline: none;
   border-color: var(--accent-blue);
   box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
 }
 
-.set-row.completed .set-select {
+.set-row.completed .set-picker-trigger {
   border-color: rgba(16, 185, 129, 0.6);
   color: #34d399;
+}
+
+.picker-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.picker-unit {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-left: 1px;
+}
+
+.set-row.completed .picker-unit {
+  color: rgba(52, 211, 153, 0.7);
+}
+
+.picker-arrow {
+  font-size: 10px;
+  color: #38bdf8;
+  margin-left: 2px;
+}
+
+/* 커스텀 인라인 드롭다운 팝오버 (모바일 브라우저 내 인라인 팝업) */
+.custom-dropdown-popover {
+  position: absolute;
+  z-index: 10000;
+  background-color: #0f172a;
+  border: 1.5px solid #38bdf8;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 0 12px rgba(56, 189, 248, 0.35);
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: popoverFadeIn 0.15s ease-out;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.custom-dropdown-popover::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-dropdown-popover::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 4px;
+}
+
+.custom-dropdown-popover::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.custom-dropdown-popover::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.custom-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.custom-dropdown-item:hover {
+  background-color: rgba(56, 189, 248, 0.18);
+  color: #ffffff;
+}
+
+.custom-dropdown-item:active {
+  background-color: rgba(56, 189, 248, 0.35);
+}
+
+.custom-dropdown-item.selected {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.28), rgba(5, 150, 105, 0.28));
+  border: 1px solid rgba(16, 185, 129, 0.55);
+  color: #34d399;
+  font-weight: 800;
+}
+
+.item-check {
+  color: #10b981;
+  font-weight: 900;
+  font-size: 11px;
 }
 
 /* 맨몸운동 태그 및 레이아웃 */
@@ -2088,9 +2196,9 @@ body {
   white-space: nowrap;
 }
 
-.reps-group.full-reps .set-select {
+.reps-wrap.full-reps .set-picker-trigger {
   padding-left: 14px;
-  padding-right: 26px;
+  padding-right: 14px;
 }
 
 .set-times {
@@ -2598,11 +2706,9 @@ body {
     font-size: 10.5px;
   }
 
-  .set-select {
-    padding: 5px 18px 5px 6px;
+  .set-picker-trigger {
+    padding: 5px 8px;
     font-size: 12px;
-    background-size: 10px;
-    background-position: right 4px center;
   }
 
   .bodyweight-pill {

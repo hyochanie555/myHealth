@@ -28,7 +28,7 @@ function makeYoutubeSearchUrl(query) {
 // 개별 운동 목록 정의
 // ==========================================
 
-// --- 월요일 : 상체 집중 (복근 없음!) ---
+// --- 월요일 : 상체 & 코어 완성 데이 (목요일과 동일 균형 루틴) ---
 const EXERCISES_MON_UPPER = [
   {
     id: "mon_warmup",
@@ -138,6 +138,19 @@ const EXERCISES_MON_UPPER = [
     restSec: 45,
     tip: "팔꿈치를 패드에 밀착하고 반동 없이 이두근의 힘으로만 접어 올려 쥐어짭니다.",
     youtubeQuery: "암컬 머신 이두운동 자세"
+  },
+  {
+    id: "mon_u9",
+    order: "9",
+    name: "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
+    alternative: "매트 크런치 / 플랭크",
+    machineId: "m11",
+    target: "하복부 (아랫배 맨몸 코어)",
+    setsReps: "3세트 × 15회",
+    restSec: 45,
+    isBodyweight: true,
+    tip: "팔꿈치 패드에 체중을 싣고 골반을 가슴 쪽으로 둥글게 말아 올리며 아랫배를 쥐어짭니다.",
+    youtubeQuery: "행잉 니레이즈 복근운동 팁"
   }
 ];
 
@@ -429,7 +442,7 @@ const EXERCISES_THU_UPPER = [
     id: "thu_u7",
     order: "7",
     name: "뉴텍 시티드 딥 (핀머신)",
-    alternative: "뉴텍 암컬 (핀머신)",
+    alternative: "케이블 푸시다운",
     machineId: "m07",
     target: "팔 삼두 (팔 뒤쪽) & 아랫가슴",
     setsReps: "3세트 × 12회",
@@ -440,12 +453,25 @@ const EXERCISES_THU_UPPER = [
   {
     id: "thu_u8",
     order: "8",
+    name: "뉴텍 암컬 (핀머신)",
+    alternative: "이지바 바벨컬",
+    machineId: "m33",
+    target: "팔 앞쪽 (상완이두근)",
+    setsReps: "3세트 × 12회",
+    restSec: 45,
+    tip: "팔꿈치를 패드에 밀착하고 반동 없이 이두근의 힘으로만 접어 올려 쥐어짭니다.",
+    youtubeQuery: "암컬 머신 이두운동 자세"
+  },
+  {
+    id: "thu_u9",
+    order: "9",
     name: "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
     alternative: "매트 크런치 / 플랭크",
     machineId: "m11",
-    target: "하복부 (아랫배 코어)",
+    target: "하복부 (아랫배 맨몸 코어)",
     setsReps: "3세트 × 15회",
     restSec: 45,
+    isBodyweight: true,
     tip: "팔꿈치 패드에 체중을 싣고 골반을 가슴 쪽으로 둥글게 말아 올리며 아랫배를 쥐어짭니다.",
     youtubeQuery: "행잉 니레이즈 복근운동 팁"
   }
@@ -662,27 +688,27 @@ const EXERCISES_SUN_RECOVERY = [
 
 // 월.화.수.목.금.토.일 각 요일별 개별 루틴 맵
 const WEEKLY_ROUTINES = {
-  // 월요일 : 상체 (복근 없음)
+  // 월요일 : 상체 & 코어
   mon: {
     id: "mon",
     dayName: "월요일",
     dayShort: "월",
     dayNumber: 1,
     type: "upper",
-    title: "월요일 : 상체 집중 데이",
-    subtitle: "가슴 · 등 · 어깨 · 팔 완성 루틴 (복근 없음)",
-    estimatedTime: "약 50분",
+    title: "월요일 : 상체 & 코어 완성 데이",
+    subtitle: "가슴 · 등 · 어깨 · 팔(이두/삼두) · 복근 균형 루틴",
+    estimatedTime: "약 55분",
     exercises: EXERCISES_MON_UPPER
   },
-  // 화요일 : 하체 + 백익스텐션 + 복근
+  // 화요일 : 하체 & 코어
   tue: {
     id: "tue",
     dayName: "화요일",
     dayShort: "화",
     dayNumber: 2,
     type: "lower",
-    title: "화요일 : 하체 & 힙 + 코어/복근 데이",
-    subtitle: "허벅지 · 둔근 · 햄스트링 · 백익스텐션 · 복근 정복",
+    title: "화요일 : 하체 & 코어 완성 데이",
+    subtitle: "허벅지 · 둔근 · 햄스트링 · 백익스텐션 · 복근 · 옆구리 정복",
     estimatedTime: "약 65분",
     exercises: EXERCISES_TUE_LOWER
   },
@@ -698,28 +724,28 @@ const WEEKLY_ROUTINES = {
     estimatedTime: "50분",
     exercises: EXERCISES_WED_CARDIO
   },
-  // 목요일 : 상체 + 복근
+  // 목요일 : 상체 & 코어
   thu: {
     id: "thu",
     dayName: "목요일",
     dayShort: "목",
     dayNumber: 4,
     type: "upper",
-    title: "목요일 : 상체 & 복근 집중 데이",
-    subtitle: "가슴 · 등 · 어깨 · 팔 · 하복부 완성 루틴",
+    title: "목요일 : 상체 & 코어 완성 데이",
+    subtitle: "가슴 · 등 · 어깨 · 팔(이두/삼두) · 복근 균형 루틴",
     estimatedTime: "약 55분",
     exercises: EXERCISES_THU_UPPER
   },
-  // 금요일 : 하체 + 백익스텐션
+  // 금요일 : 하체 & 코어
   fri: {
     id: "fri",
     dayName: "금요일",
     dayShort: "금",
     dayNumber: 5,
     type: "lower",
-    title: "금요일 : 하체 & 힙 집중 데이",
-    subtitle: "허벅지 · 둔근 · 햄스트링 · 백익스텐션 강화",
-    estimatedTime: "약 60분",
+    title: "금요일 : 하체 & 코어 완성 데이",
+    subtitle: "허벅지 · 둔근 · 햄스트링 · 백익스텐션 · 복근 · 옆구리 정복",
+    estimatedTime: "약 65분",
     exercises: EXERCISES_FRI_LOWER
   },
   // 토요일 : 유산소
