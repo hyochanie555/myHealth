@@ -470,17 +470,6 @@ function bindEvents() {
     });
   }
 
-  // 13. 데이터 백업 & 복원
-  const btnExportData = document.getElementById("btnExportData");
-  if (btnExportData) btnExportData.addEventListener("click", exportDataAsJson);
-
-  const importFileInput = document.getElementById("importFileInput");
-  if (importFileInput) {
-    importFileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) importDataFromJson(file);
-    });
-  }
 
   // 14. 성장 그래프 기구 선택 및 모드 토글
   const chartExerciseSelect = document.getElementById("chartExerciseSelect");
