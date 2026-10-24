@@ -67,7 +67,7 @@ const SoundEffects = {
 
 // 앱 상태 관리
 const AppState = {
-  // 현재 뷰 ("routine" | "calendar" | "library")
+  // 현재 뷰 ("routine" | "calendar" | "library" | "chart")
   currentView: "routine",
 
   // 현재 선택된 요일 키 ("mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun")
@@ -78,6 +78,16 @@ const AppState = {
   todayDayNumber: 0, // 0~6
   todayDayKey: "mon",
   todayDayKorean: "월",
+
+  // 사용자 체중 (kg, 기본 78kg)
+  userWeight: 78,
+
+  // 도감에서 오늘 루틴에 추가한 운동 목록
+  customAddedExercises: [],
+
+  // 운동 도감 탭 상태
+  libraryFilter: "all",
+  librarySearchQuery: "",
 
   // 달력 탐색 연/월
   calYear: 2026,
@@ -97,10 +107,10 @@ const AppState = {
     totalSeconds: 0
   },
 
-  // 유산소 타이머 (50분)
+  // 유산소 타이머 (기본 30분)
   cardioTimer: {
     intervalId: null,
-    remainingSeconds: 50 * 60,
+    remainingSeconds: 30 * 60,
     isRunning: false
   },
 
@@ -200,6 +210,26 @@ function loadAllStoredData() {
   } else {
     AppState.lastExerciseLogs = {};
   }
+
+  // 4. 사용자 체중 로드
+  const storedWeight = localStorage.getItem("myhealth_user_weight");
+  if (storedWeight) {
+    const parsed = parseFloat(storedWeight);
+    if (!isNaN(parsed) && parsed > 0) AppState.userWeight = parsed;
+  }
+  updateHeaderWeightDisplay();
+
+  // 5. 오늘 루틴에 추가된 커스텀 운동 로드
+  const storedCustom = localStorage.getItem(`myhealth_custom_ex_${AppState.todayDateStr}`);
+  if (storedCustom) {
+    try {
+      AppState.customAddedExercises = JSON.parse(storedCustom);
+    } catch (e) {
+      AppState.customAddedExercises = [];
+    }
+  } else {
+    AppState.customAddedExercises = [];
+  }
 }
 
 function saveCompletedExercises() {
@@ -216,6 +246,15 @@ function saveCalendarData() {
 
 function saveLastExerciseLogs() {
   localStorage.setItem("myhealth_last_logs", JSON.stringify(AppState.lastExerciseLogs));
+}
+
+function saveCustomAddedExercises() {
+  localStorage.setItem(`myhealth_custom_ex_${AppState.todayDateStr}`, JSON.stringify(AppState.customAddedExercises));
+}
+
+function updateHeaderWeightDisplay() {
+  const label = document.getElementById("headerWeightLabel");
+  if (label) label.textContent = `${AppState.userWeight}kg`;
 }
 
 // 전체 루틴 운동 ID -> 운동 이름 매핑 생성
@@ -324,6 +363,39 @@ function bindEvents() {
     btnQuickRest.addEventListener("click", () => startRestTimer(60));
   }
 
+  // 3-1. 체중 설정 버튼 및 모달
+  const btnUserWeight = document.getElementById("btnUserWeight");
+  if (btnUserWeight) {
+    btnUserWeight.addEventListener("click", openWeightModal);
+  }
+  const btnCloseWeightModal = document.getElementById("btnCloseWeightModal");
+  if (btnCloseWeightModal) {
+    btnCloseWeightModal.addEventListener("click", closeWeightModal);
+  }
+  const btnSaveWeight = document.getElementById("btnSaveWeight");
+  if (btnSaveWeight) {
+    btnSaveWeight.addEventListener("click", () => {
+      const input = document.getElementById("inputUserWeight");
+      if (input) saveUserWeight(input.value);
+    });
+  }
+  document.querySelectorAll(".weight-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const w = btn.getAttribute("data-weight");
+      const input = document.getElementById("inputUserWeight");
+      if (input) input.value = w;
+      document.querySelectorAll(".weight-preset-btn").forEach(b => b.classList.toggle("active", b === btn));
+    });
+  });
+
+  // 3-2. 상단 '운동 추가' 버튼 (도감 뷰로 이동)
+  const btnAddFromLibraryTop = document.getElementById("btnAddFromLibraryTop");
+  if (btnAddFromLibraryTop) {
+    btnAddFromLibraryTop.addEventListener("click", () => {
+      switchView("library");
+    });
+  }
+
   // 4. 플로팅 타이머 컨트롤
   const btnTimerPlus30 = document.getElementById("btnTimerPlus30");
   if (btnTimerPlus30) {
@@ -350,6 +422,9 @@ function bindEvents() {
         curRoutine.exercises.forEach(ex => {
           AppState.completedExerciseIds.delete(ex.id);
         });
+        AppState.customAddedExercises.forEach(ex => {
+          AppState.completedExerciseIds.delete(ex.id);
+        });
         saveCompletedExercises();
         renderRoutineView();
       }
@@ -368,6 +443,33 @@ function bindEvents() {
       }
     });
   }
+
+  // 6-1. 달력 수행한 운동 내역 아코디언 토글
+  const btnToggleWorkoutSummary = document.getElementById("btnToggleWorkoutSummary");
+  const panelWorkoutSummary = document.getElementById("panelWorkoutSummary");
+  if (btnToggleWorkoutSummary && panelWorkoutSummary) {
+    btnToggleWorkoutSummary.addEventListener("click", () => {
+      const isHidden = panelWorkoutSummary.classList.toggle("hidden");
+      btnToggleWorkoutSummary.classList.toggle("open", !isHidden);
+    });
+  }
+
+  // 6-2. 도감 검색 및 필터 이벤트
+  const libSearchInput = document.getElementById("libSearchInput");
+  if (libSearchInput) {
+    libSearchInput.addEventListener("input", (e) => {
+      AppState.librarySearchQuery = e.target.value.trim();
+      renderLibraryView();
+    });
+  }
+  document.querySelectorAll(".lib-filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".lib-filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      AppState.libraryFilter = btn.getAttribute("data-cat");
+      renderLibraryView();
+    });
+  });
 
   // 7. 모달 닫기 및 이미지 줌
   const btnCloseModal = document.getElementById("btnCloseModal");
@@ -595,6 +697,17 @@ function selectDay(dayKey) {
 }
 
 // 서브 뷰 전환 ("routine" | "calendar" | "chart")
+function getDayExercises(dayKey) {
+  const routine = WEEKLY_ROUTINES[dayKey];
+  if (!routine) return [];
+  const base = [...routine.exercises];
+  if (dayKey === AppState.todayDayKey && AppState.customAddedExercises && AppState.customAddedExercises.length > 0) {
+    return [...base, ...AppState.customAddedExercises];
+  }
+  return base;
+}
+
+// 서브 뷰 전환 ("routine" | "calendar" | "library" | "chart")
 function switchView(viewName) {
   AppState.currentView = viewName;
 
@@ -606,10 +719,12 @@ function switchView(viewName) {
   const routineView = document.getElementById("routineView");
   const calendarView = document.getElementById("calendarView");
   const chartView = document.getElementById("chartView");
+  const libraryView = document.getElementById("libraryView");
 
   if (routineView) routineView.classList.remove("active");
   if (calendarView) calendarView.classList.remove("active");
   if (chartView) chartView.classList.remove("active");
+  if (libraryView) libraryView.classList.remove("active");
 
   if (viewName === "calendar") {
     if (calendarView) calendarView.classList.add("active");
@@ -618,6 +733,9 @@ function switchView(viewName) {
   } else if (viewName === "chart") {
     if (chartView) chartView.classList.add("active");
     renderChartView();
+  } else if (viewName === "library") {
+    if (libraryView) libraryView.classList.add("active");
+    renderLibraryView();
   } else {
     if (routineView) routineView.classList.add("active");
     renderRoutineView();
@@ -650,7 +768,7 @@ function renderRoutineView() {
   }
 
   // 운동 분류 (남은 운동 vs 완료 운동)
-  const allExercises = routine.exercises;
+  const allExercises = getDayExercises(AppState.selectedDay);
   const activeExercises = [];
   const completedExercises = [];
 
@@ -811,7 +929,7 @@ function openCustomDropdown(triggerBtn, type, currentVal, onSelect) {
 }
 
 // 세트 행 HTML 생성 헬퍼 (커스텀 인라인 드롭다운 트리거 버튼 사용)
-function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
+function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted, isAssisted = false) {
   const compClass = isCompleted ? "completed" : "";
   const checkIcon = isCompleted ? "✔" : "";
 
@@ -833,6 +951,12 @@ function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
       </div>
     `;
   } else {
+    let assistedBadge = "";
+    if (isAssisted) {
+      const actualW = Math.max(0, AppState.userWeight - weight);
+      assistedBadge = `<span class="assisted-info-badge" title="실제 든 중량 = 체중(${AppState.userWeight}kg) - 보조핀(${weight}kg)">실${actualW}kg</span>`;
+    }
+
     return `
       <div class="set-row ${compClass}" data-set="${setNumber}">
         <button type="button" class="set-status-btn ${compClass}" title="세트 완료 상태 전환">
@@ -845,6 +969,7 @@ function createSetRowHtml(setNumber, weight, reps, isBodyweight, isCompleted) {
             <span class="picker-arrow">▾</span>
           </button>
         </div>
+        ${assistedBadge}
         <span class="set-times">×</span>
         <div class="set-picker-wrap reps-wrap">
           <button type="button" class="set-picker-trigger reps-trigger" data-type="reps" data-val="${reps}" aria-label="${setNumber}세트 횟수">
@@ -865,6 +990,7 @@ function autoSaveExerciseSets(ex, rowsContainer) {
   const sets = [];
   let maxWeight = 0;
   let totalVolume = 0;
+  const isAssisted = Boolean(ex.isAssistedPullup || (ex.name && ex.name.includes("풀업 어시스트")));
 
   rows.forEach((r, idx) => {
     const wBtn = r.querySelector(".weight-trigger");
@@ -872,9 +998,27 @@ function autoSaveExerciseSets(ex, rowsContainer) {
     const w = wBtn ? parseFloat(wBtn.getAttribute("data-val")) || 0 : 0;
     const reps = rBtn ? parseInt(rBtn.getAttribute("data-val"), 10) || 0 : 0;
     const isCompleted = r.classList.contains("completed");
-    sets.push({ set: idx + 1, weight: w, reps: reps, isCompleted: isCompleted });
-    if (w > maxWeight) maxWeight = w;
-    totalVolume += (w * reps);
+
+    // 실제 든 중량 계산 (어시스트 머신: 체중 - 핀 보조무게)
+    const actualW = isAssisted ? Math.max(0, AppState.userWeight - w) : w;
+    const setVol = actualW * reps;
+
+    // 어시스트 뱃지 실시간 업데이트
+    if (isAssisted) {
+      const badge = r.querySelector(".assisted-info-badge");
+      if (badge) badge.textContent = `실${actualW}kg`;
+    }
+
+    sets.push({
+      set: idx + 1,
+      weight: w,
+      actualWeight: actualW,
+      reps: reps,
+      isCompleted: isCompleted
+    });
+
+    if (actualW > maxWeight) maxWeight = actualW;
+    totalVolume += setVol;
   });
 
   const logData = {
@@ -882,7 +1026,8 @@ function autoSaveExerciseSets(ex, rowsContainer) {
     sets: sets,
     maxWeight: maxWeight,
     totalVolume: totalVolume,
-    isBodyweight: Boolean(ex.isBodyweight)
+    isBodyweight: Boolean(ex.isBodyweight),
+    isAssistedPullup: isAssisted
   };
 
   AppState.lastExerciseLogs[ex.name] = logData;
@@ -908,6 +1053,28 @@ function autoSaveExerciseSets(ex, rowsContainer) {
   saveCalendarData();
 }
 
+// 유산소 시간 기록 저장 헬퍼
+function saveCardioExercise(ex, minutes) {
+  const logData = {
+    date: AppState.todayDateStr,
+    isCardio: true,
+    durationMinutes: minutes,
+    sets: [{ set: 1, weight: 0, reps: minutes, isCompleted: true }],
+    maxWeight: 0,
+    totalVolume: 0
+  };
+  AppState.lastExerciseLogs[ex.name] = logData;
+  saveLastExerciseLogs();
+
+  const todayStr = AppState.todayDateStr;
+  const curRecord = AppState.calendarData[todayStr] || {};
+  const exerciseLogs = curRecord.exerciseLogs || {};
+  exerciseLogs[ex.name] = logData;
+  curRecord.exerciseLogs = exerciseLogs;
+  AppState.calendarData[todayStr] = curRecord;
+  saveCalendarData();
+}
+
 // 개별 운동 카드 HTML 생성
 function createExerciseCardElement(ex) {
   const machine = ex.machineId ? MACHINES_DATA.find(m => m.id === ex.machineId) : findMachineByName(ex.name);
@@ -915,17 +1082,46 @@ function createExerciseCardElement(ex) {
   card.className = "exercise-card";
   card.id = `card_${ex.id}`;
 
+  const isAssisted = Boolean(ex.isAssistedPullup || (ex.name && ex.name.includes("풀업 어시스트")));
+
   // 사진 우선순위: ex.customImage > machine.image > 고품질 fallback
   const imgUrl = ex.customImage || (machine ? machine.image : "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80");
-  const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : (ex.isBodyweight ? "맨몸" : "루틴"));
+  const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : (ex.isCardioTime ? "유산소" : (ex.isBodyweight ? "맨몸" : "루틴")));
 
   const ytQuery = ex.youtubeQuery || (machine ? machine.name + " 운동 사용법" : ex.name + " 운동");
   const ytUrl = makeYoutubeSearchUrl(ytQuery);
 
-  const isSetTrackable = !ex.isWarmup && Boolean(ex.setsReps && ex.setsReps.includes("세트"));
+  const isSetTrackable = !ex.isWarmup && !ex.isCardioTime && Boolean(ex.setsReps && ex.setsReps.includes("세트"));
   let setLoggerHtml = "";
 
-  if (isSetTrackable) {
+  if (ex.isCardioTime) {
+    // 유산소 전용 시간(분) 입력 UI
+    const defaultMins = ex.defaultMinutes || 30;
+    const prevLog = AppState.lastExerciseLogs[ex.name];
+    const initialMins = (prevLog && prevLog.durationMinutes) ? prevLog.durationMinutes : defaultMins;
+
+    setLoggerHtml = `
+      <div class="cardio-time-box" id="logger_${ex.id}">
+        <div class="cardio-time-header">
+          <span class="cardio-time-title">🏃‍♂️ 달리기 지속 시간 설정</span>
+          <span class="cardio-current-badge"><strong id="cardioVal_${ex.id}">${initialMins}</strong>분</span>
+        </div>
+        <div class="cardio-time-presets" id="cardioPresets_${ex.id}">
+          <button type="button" class="time-preset-pill ${initialMins === 15 ? 'active' : ''}" data-mins="15">15분</button>
+          <button type="button" class="time-preset-pill ${initialMins === 20 ? 'active' : ''}" data-mins="20">20분</button>
+          <button type="button" class="time-preset-pill ${initialMins === 30 ? 'active' : ''}" data-mins="30">30분</button>
+          <button type="button" class="time-preset-pill ${initialMins === 40 ? 'active' : ''}" data-mins="40">40분</button>
+          <button type="button" class="time-preset-pill ${initialMins === 50 ? 'active' : ''}" data-mins="50">50분</button>
+          <button type="button" class="time-preset-pill ${initialMins === 60 ? 'active' : ''}" data-mins="60">60분</button>
+        </div>
+        <div class="cardio-custom-row">
+          <span style="font-size:11px; color:var(--text-muted);">직접 입력:</span>
+          <input type="number" id="cardioInput_${ex.id}" class="cardio-custom-input" min="1" max="180" value="${initialMins}" />
+          <span style="font-size:12px; color:#fff;">분 달리기</span>
+        </div>
+      </div>
+    `;
+  } else if (isSetTrackable) {
     const prevLog = AppState.lastExerciseLogs[ex.name];
     let initialSets = [];
     let prevHint = ex.isBodyweight ? "맨몸 운동 (횟수만 기록)" : "기본 권장 세트";
@@ -939,23 +1135,27 @@ function createExerciseCardElement(ex) {
       }));
       prevHint = ex.isBodyweight
         ? `직전 기록: ${initialSets.length}세트 (최고 ${Math.max(...initialSets.map(s => s.reps))}회)`
-        : `직전 기록: 최고 ${prevLog.maxWeight}kg (${initialSets.length}세트)`;
+        : (isAssisted
+            ? `직전: 보조 ${prevLog.sets[0]?.weight || 55}kg (실중량 ${Math.max(0, AppState.userWeight - (prevLog.sets[0]?.weight || 55))}kg)`
+            : `직전 기록: 최고 ${prevLog.maxWeight}kg (${initialSets.length}세트)`);
     } else {
       // 권장 세트 파싱
       const matchSets = ex.setsReps.match(/(\d+)세트/);
       const setCount = matchSets ? parseInt(matchSets[1], 10) : 3;
       const matchReps = ex.setsReps.match(/(\d+)(?:~(\d+))?회/);
       const repsCount = matchReps ? parseInt(matchReps[1], 10) : (ex.isBodyweight ? 15 : 12);
-      const defaultWeight = ex.isBodyweight ? 0 : 20;
+      const defaultWeight = ex.isBodyweight ? 0 : (isAssisted ? 55 : 20);
 
       for (let i = 1; i <= setCount; i++) {
         initialSets.push({ set: i, weight: defaultWeight, reps: repsCount, isCompleted: false });
       }
-      prevHint = ex.isBodyweight ? `권장: ${ex.setsReps} (맨몸)` : `권장 루틴: ${ex.setsReps}`;
+      prevHint = isAssisted
+        ? `권장: 3세트 (보조 55kg 기준 실중량 ${Math.max(0, AppState.userWeight - 55)}kg)`
+        : (ex.isBodyweight ? `권장: ${ex.setsReps} (맨몸)` : `권장 루틴: ${ex.setsReps}`);
     }
 
     const setRowsHtml = initialSets.map(s => 
-      createSetRowHtml(s.set, s.weight, s.reps, ex.isBodyweight, s.isCompleted)
+      createSetRowHtml(s.set, s.weight, s.reps, ex.isBodyweight, s.isCompleted, isAssisted)
     ).join("");
 
     setLoggerHtml = `
@@ -1031,8 +1231,54 @@ function createExerciseCardElement(ex) {
   if (titleEl) titleEl.addEventListener("click", openGuide);
   if (btnGuide) btnGuide.addEventListener("click", openGuide);
 
+  // 초시계 버튼 클릭 시 상단 타이머 시작 (현재 세트 번호 및 다음 운동 자동 탐색)
   if (btnRest) {
-    btnRest.addEventListener("click", () => startRestTimer(ex.restSec));
+    btnRest.addEventListener("click", () => {
+      let compCount = 0;
+      if (rowsContainer) {
+        compCount = rowsContainer.querySelectorAll(".set-row.completed").length;
+      }
+      startRestTimer(ex.restSec || 60, ex, compCount > 0 ? compCount : 1);
+    });
+  }
+
+  // 유산소 전용 프리셋 및 인풋 이벤트
+  if (ex.isCardioTime) {
+    const presetsBox = card.querySelector(`#cardioPresets_${ex.id}`);
+    const cardioInput = card.querySelector(`#cardioInput_${ex.id}`);
+    const cardioBadgeVal = card.querySelector(`#cardioVal_${ex.id}`);
+
+    const setCardioMinutes = (m) => {
+      if (cardioInput) cardioInput.value = m;
+      if (cardioBadgeVal) cardioBadgeVal.textContent = m;
+      if (presetsBox) {
+        presetsBox.querySelectorAll(".time-preset-pill").forEach(p => {
+          p.classList.toggle("active", parseInt(p.getAttribute("data-mins"), 10) === m);
+        });
+      }
+      // 상단 유산소 타이머 동기화
+      AppState.cardioTimer.remainingSeconds = m * 60;
+      updateCardioDisplay();
+    };
+
+    if (presetsBox) {
+      presetsBox.addEventListener("click", (e) => {
+        const pill = e.target.closest(".time-preset-pill");
+        if (pill) {
+          const m = parseInt(pill.getAttribute("data-mins"), 10);
+          setCardioMinutes(m);
+        }
+      });
+    }
+
+    if (cardioInput) {
+      cardioInput.addEventListener("input", (e) => {
+        const m = parseInt(e.target.value, 10);
+        if (!isNaN(m) && m > 0) {
+          setCardioMinutes(m);
+        }
+      });
+    }
   }
 
   // 커스텀 인라인 드롭다운 및 인터랙션 핸들러
@@ -1111,7 +1357,7 @@ function createExerciseCardElement(ex) {
           row.remove();
           const remaining = rowsContainer.querySelectorAll(".set-row");
           if (remaining.length === 0) {
-            const newRowHtml = createSetRowHtml(1, ex.isBodyweight ? 0 : 20, 10, ex.isBodyweight, false);
+            const newRowHtml = createSetRowHtml(1, ex.isBodyweight ? 0 : (isAssisted ? 55 : 20), 10, ex.isBodyweight, false, isAssisted);
             const tempDiv = document.createElement("div");
             tempDiv.innerHTML = newRowHtml.trim();
             rowsContainer.appendChild(tempDiv.firstChild);
@@ -1133,28 +1379,31 @@ function createExerciseCardElement(ex) {
     btnAddSet.addEventListener("click", () => {
       const remaining = rowsContainer.querySelectorAll(".set-row");
       const nextSetNum = remaining.length + 1;
-      let lastWeight = ex.isBodyweight ? 0 : 20;
+      let lastWeight = ex.isBodyweight ? 0 : (isAssisted ? 55 : 20);
       let lastReps = 10;
 
       if (remaining.length > 0) {
         const lastRow = remaining[remaining.length - 1];
         const wTrigger = lastRow.querySelector(".weight-trigger");
         const rTrigger = lastRow.querySelector(".reps-trigger");
-        if (wTrigger) lastWeight = parseFloat(wTrigger.getAttribute("data-val")) || 20;
+        if (wTrigger) lastWeight = parseFloat(wTrigger.getAttribute("data-val")) || (isAssisted ? 55 : 20);
         if (rTrigger) lastReps = parseInt(rTrigger.getAttribute("data-val"), 10) || 10;
       }
 
       const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = createSetRowHtml(nextSetNum, lastWeight, lastReps, ex.isBodyweight, false).trim();
+      tempDiv.innerHTML = createSetRowHtml(nextSetNum, lastWeight, lastReps, ex.isBodyweight, false, isAssisted).trim();
       rowsContainer.appendChild(tempDiv.firstChild);
       autoSaveExerciseSets(ex, rowsContainer);
     });
   }
 
-
   // 완료 및 저장
   const saveAndComplete = () => {
-    if (isSetTrackable && rowsContainer) {
+    if (ex.isCardioTime) {
+      const cardioInput = card.querySelector(`#cardioInput_${ex.id}`);
+      const mins = cardioInput ? (parseInt(cardioInput.value, 10) || 30) : 30;
+      saveCardioExercise(ex, mins);
+    } else if (isSetTrackable && rowsContainer) {
       // 모든 세트를 완료로 표시
       rowsContainer.querySelectorAll(".set-row").forEach(r => {
         r.classList.add("completed");
@@ -1174,7 +1423,7 @@ function createExerciseCardElement(ex) {
   return card;
 }
 
-// 카드 사라짐(Dismiss) 애니메이션 처리
+// 카드 사라짐(Dismiss) 애니메이션 처리 후 남은 종목 최상단으로 화면 이동
 function dismissCardAndComplete(cardEl, ex) {
   SoundEffects.playComplete();
   cardEl.classList.add("dismissing");
@@ -1184,6 +1433,20 @@ function dismissCardAndComplete(cardEl, ex) {
 
   setTimeout(() => {
     renderRoutineView();
+
+    // 남은 종목 중 최상단으로 화면 부드럽게 이동
+    const activeList = document.getElementById("activeExercisesList");
+    if (activeList) {
+      const firstCard = activeList.querySelector(".exercise-card");
+      if (firstCard) {
+        firstCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        const sectionTitle = document.querySelector(".section-title-bar");
+        if (sectionTitle) {
+          sectionTitle.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    }
   }, 320);
 }
 
@@ -1196,10 +1459,14 @@ function createCompletedRowElement(ex) {
   const log = todayRecord.exerciseLogs ? todayRecord.exerciseLogs[ex.name] : null;
 
   let setsSummaryHtml = "";
-  if (log && log.sets && log.sets.length > 0) {
+  if (log && log.isCardio) {
+    setsSummaryHtml = `<div class="completed-sets-summary">${log.durationMinutes}분 달리기 완료 (유산소)</div>`;
+  } else if (log && log.sets && log.sets.length > 0) {
     if (log.isBodyweight || ex.isBodyweight) {
       const maxReps = Math.max(...log.sets.map(s => s.reps));
       setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (최고 ${maxReps}회 | 맨몸)</div>`;
+    } else if (log.isAssistedPullup || ex.isAssistedPullup) {
+      setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (보조 ${log.sets[0]?.weight || 55}kg | 실중량 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg)</div>`;
     } else {
       setsSummaryHtml = `<div class="completed-sets-summary">${log.sets.length}세트 완료 (최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg)</div>`;
     }
@@ -1379,10 +1646,14 @@ function renderSelectedDateDetail() {
   }
 
   if (record && record.completedItems && record.completedItems.length > 0) {
+    const completedCount = record.completedItems ? record.completedItems.length : 0;
+    const countEl = document.getElementById("panelWorkoutCount");
+    if (countEl) countEl.textContent = completedCount;
+
     // 상태 뱃지
     if (panelStatusBadge) {
       panelStatusBadge.className = `status-pill ${record.badgeClass || "status-part-done"}`;
-      panelStatusBadge.textContent = record.statusText || `${record.completedItems.length}개 완료`;
+      panelStatusBadge.textContent = record.statusText || `${completedCount}개 완료`;
     }
 
     // 운동 상세 및 세트 목록 렌더링
@@ -1392,22 +1663,41 @@ function renderSelectedDateDetail() {
 
       let cardsHtml = `
         <div style="font-weight:700; margin-bottom:8px; color:#fff; display:flex; align-items:center; justify-content:space-between;">
-          <span>${mainPartText}총 ${record.completedItems.length}개 운동 완료</span>
+          <span>${mainPartText}총 ${completedCount}개 운동 완료</span>
         </div>
       `;
 
       cardsHtml += record.completedItems.map(item => {
         const log = exerciseLogs[item];
-        if (log && log.sets && log.sets.length > 0) {
+        if (log && log.isCardio) {
+          return `
+            <div class="workout-detail-card">
+              <div class="workout-detail-title-row">
+                <span class="workout-detail-name">🏃‍♂️ ${escapeHtml(item)}</span>
+                <span class="workout-detail-metrics">${log.durationMinutes}분 지속 완료</span>
+              </div>
+            </div>
+          `;
+        } else if (log && log.sets && log.sets.length > 0) {
           const isBody = Boolean(log.isBodyweight);
+          const isAssisted = Boolean(log.isAssistedPullup);
           const setsList = log.sets.map(s => {
-            const setVal = isBody ? `${s.reps}회` : `${s.weight}kg×${s.reps}회`;
+            let setVal = `${s.weight}kg×${s.reps}회`;
+            if (isBody) {
+              setVal = `${s.reps}회`;
+            } else if (isAssisted) {
+              setVal = `보조${s.weight}kg(실${s.actualWeight ?? Math.max(0, AppState.userWeight - s.weight)}kg)×${s.reps}회`;
+            }
             return `<span class="set-chip">${s.set}세트: ${setVal}</span>`;
           }).join("");
+
           const maxReps = Math.max(...log.sets.map(s => s.reps));
-          const metricStr = isBody 
-            ? `최고 ${maxReps}회 | 맨몸` 
-            : `최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg`;
+          let metricStr = `최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg`;
+          if (isBody) {
+            metricStr = `최고 ${maxReps}회 | 맨몸`;
+          } else if (isAssisted) {
+            metricStr = `실중량 최고 ${log.maxWeight}kg | 볼륨 ${log.totalVolume.toLocaleString()}kg`;
+          }
 
           return `
             <div class="workout-detail-card">
@@ -1676,8 +1966,8 @@ function closeModal() {
   if (modalImg) modalImg.classList.remove("zoomed");
 }
 
-// === 4. 휴식 타이머 로직 ===
-function startRestTimer(seconds) {
+// === 4. 상단 휴식 타이머 로직 ===
+function startRestTimer(seconds, currentEx = null, currentSetNumber = null) {
   stopRestTimer();
   SoundEffects.init();
 
@@ -1685,18 +1975,91 @@ function startRestTimer(seconds) {
   AppState.restTimer.remainingSeconds = seconds;
 
   const bar = document.getElementById("floatingTimerBar");
-  if (bar) bar.classList.remove("hidden");
+  if (bar) {
+    bar.classList.remove("timer-flash-alert");
+    bar.classList.remove("hidden");
+  }
+
+  // 1. 세트 진행 정보 표기
+  const setInfoEl = document.getElementById("floatingTimerSetInfo");
+  if (setInfoEl) {
+    if (currentEx) {
+      if (currentSetNumber && currentSetNumber > 0) {
+        setInfoEl.textContent = `${currentEx.name} · ${currentSetNumber}세트 완료 후 휴식 중`;
+      } else {
+        setInfoEl.textContent = `${currentEx.name} · 세트 휴식 중`;
+      }
+    } else {
+      setInfoEl.textContent = "세트 간 휴식 중";
+    }
+  }
+
+  // 2. 다음 운동할 기구 이름과 사진 안내
+  const nextPreviewEl = document.getElementById("floatingTimerNextPreview");
+  const nextImgEl = document.getElementById("floatingTimerNextImg");
+  const nextNameEl = document.getElementById("floatingTimerNextName");
+
+  const todayExercises = getDayExercises(AppState.selectedDay);
+  let nextEx = null;
+
+  if (currentEx) {
+    const currentIdx = todayExercises.findIndex(e => e.id === currentEx.id);
+    if (currentIdx !== -1) {
+      // 현재 운동 다음부터 미완료 운동 찾기
+      for (let i = currentIdx + 1; i < todayExercises.length; i++) {
+        if (!AppState.completedExerciseIds.has(todayExercises[i].id)) {
+          nextEx = todayExercises[i];
+          break;
+        }
+      }
+    }
+  }
+
+  // 미완료 중 다음 운동이 없으면 남은 것 중 첫 번째
+  if (!nextEx) {
+    nextEx = todayExercises.find(e => !AppState.completedExerciseIds.has(e.id) && (!currentEx || e.id !== currentEx.id));
+  }
+
+  if (nextEx && nextPreviewEl) {
+    const nextMachine = nextEx.machineId ? MACHINES_DATA.find(m => m.id === nextEx.machineId) : findMachineByName(nextEx.name);
+    const nextImgUrl = nextMachine ? nextMachine.image : (nextEx.customImage || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80');
+
+    if (nextImgEl) nextImgEl.src = nextImgUrl;
+    if (nextNameEl) nextNameEl.textContent = nextEx.name;
+    nextPreviewEl.style.display = "flex";
+  } else if (nextPreviewEl) {
+    nextPreviewEl.style.display = "none";
+  }
 
   updateTimerDisplay();
 
   AppState.restTimer.intervalId = setInterval(() => {
     AppState.restTimer.remainingSeconds--;
     if (AppState.restTimer.remainingSeconds <= 0) {
-      stopRestTimer();
+      // 카운트다운 완료 시 반짝임 및 자동 꺼짐
+      clearInterval(AppState.restTimer.intervalId);
+      AppState.restTimer.intervalId = null;
+
+      const secEl = document.getElementById("floatingTimerSeconds");
+      if (secEl) secEl.textContent = 0;
+      const fillEl = document.getElementById("timerProgressFill");
+      if (fillEl) fillEl.style.width = "0%";
+
+      // 완료 알림음 및 진동
       SoundEffects.playTimerDone();
       if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
+        navigator.vibrate([200, 100, 200, 100, 300]);
       }
+
+      // 반짝이면서 알려줌
+      if (bar) {
+        bar.classList.add("timer-flash-alert");
+      }
+
+      // 반짝임 후 자동 종료 (초시계 화면꺼짐)
+      setTimeout(() => {
+        stopRestTimer();
+      }, 1200);
     } else {
       updateTimerDisplay();
     }
@@ -1720,7 +2083,141 @@ function stopRestTimer() {
     AppState.restTimer.intervalId = null;
   }
   const bar = document.getElementById("floatingTimerBar");
-  if (bar) bar.classList.add("hidden");
+  if (bar) {
+    bar.classList.remove("timer-flash-alert");
+    bar.classList.add("hidden");
+  }
+}
+
+// === 4-1. 체중 설정 모달 관련 로직 ===
+function openWeightModal() {
+  const modal = document.getElementById("weightModal");
+  const input = document.getElementById("inputUserWeight");
+  if (input) input.value = AppState.userWeight;
+
+  document.querySelectorAll(".weight-preset-btn").forEach(btn => {
+    btn.classList.toggle("active", parseFloat(btn.getAttribute("data-weight")) === AppState.userWeight);
+  });
+
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeWeightModal() {
+  const modal = document.getElementById("weightModal");
+  if (modal) modal.classList.add("hidden");
+}
+
+function saveUserWeight(weightVal) {
+  const num = parseFloat(weightVal);
+  if (!isNaN(num) && num > 0) {
+    AppState.userWeight = num;
+    localStorage.setItem("myhealth_user_weight", String(num));
+    updateHeaderWeightDisplay();
+    closeWeightModal();
+    renderRoutineView();
+  }
+}
+
+// === 4-2. 운동 도감 (Library) 뷰 로직 ===
+function renderLibraryView() {
+  const grid = document.getElementById("libraryMachinesGrid");
+  if (!grid) return;
+
+  const catFilter = AppState.libraryFilter || "all";
+  const query = (AppState.librarySearchQuery || "").toLowerCase().replace(/[\s\(\)\-\_]/g, "");
+
+  const filtered = MACHINES_DATA.filter(m => {
+    const matchCat = catFilter === "all" || m.category === catFilter;
+    if (!matchCat) return false;
+    if (!query) return true;
+    const mName = m.name.toLowerCase().replace(/[\s\(\)\-\_]/g, "");
+    const mTarget = (m.target || "").toLowerCase().replace(/[\s\(\)\-\_]/g, "");
+    return mName.includes(query) || mTarget.includes(query);
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align:center; padding: 40px 20px; color: var(--text-muted);">
+        <p style="font-size: 28px; margin-bottom: 8px;">🔍</p>
+        <p style="font-size: 14px;">검색 결과와 일치하는 기구가 없습니다.</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(m => {
+    const isAlreadyAdded = AppState.customAddedExercises.some(ex => ex.machineId === m.id) ||
+      (WEEKLY_ROUTINES[AppState.selectedDay] && WEEKLY_ROUTINES[AppState.selectedDay].exercises.some(ex => ex.machineId === m.id));
+
+    return `
+      <div class="lib-machine-card" data-id="${m.id}">
+        <div class="lib-machine-thumb-wrap" data-action="guide">
+          <img src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80';">
+          <span class="lib-brand-pill">${m.brand}</span>
+        </div>
+        <div class="lib-card-body">
+          <div class="lib-card-meta">
+            <span class="badge-cat">${m.categoryLabel}</span>
+          </div>
+          <div class="lib-card-name">${m.name}</div>
+          <div class="lib-card-target">${m.target}</div>
+          <div class="lib-card-actions">
+            <button type="button" class="btn-lib-guide" data-action="guide">📖 설명</button>
+            <button type="button" class="btn-add-today-routine" data-action="add-today" data-id="${m.id}">
+              ${isAlreadyAdded ? "루틴에 있음 ✔" : "+ 오늘 루틴에 추가"}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // 이벤트 연결
+  grid.querySelectorAll('[data-action="guide"]').forEach(el => {
+    el.addEventListener("click", (e) => {
+      const card = e.target.closest(".lib-machine-card");
+      const id = card.getAttribute("data-id");
+      const m = MACHINES_DATA.find(x => x.id === id);
+      if (m) openMachineModal(m);
+    });
+  });
+
+  grid.querySelectorAll('[data-action="add-today"]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const m = MACHINES_DATA.find(x => x.id === id);
+      if (m) {
+        addMachineToTodayRoutine(m);
+        btn.textContent = "루틴에 추가됨 ✔";
+        btn.style.background = "var(--accent-green)";
+        btn.style.color = "#000";
+      }
+    });
+  });
+}
+
+function addMachineToTodayRoutine(machine) {
+  const isAssisted = machine.id === "m11" || machine.name.includes("풀업 어시스트");
+  const newEx = {
+    id: `custom_${Date.now()}_${machine.id}`,
+    order: "+",
+    name: machine.name,
+    alternative: "",
+    machineId: machine.id,
+    target: machine.target,
+    setsReps: isAssisted ? "3세트 × 10~12회" : "4세트 × 10~12회",
+    restSec: 60,
+    isAssistedPullup: isAssisted,
+    isBodyweight: false,
+    tip: machine.setupTip || "올바른 자세와 통제된 속도로 수축 및 이완을 진행합니다.",
+    youtubeQuery: `${machine.name} 사용법 자세`
+  };
+
+  AppState.customAddedExercises.push(newEx);
+  saveCustomAddedExercises();
+
+  alert(`'${machine.name}'이(가) 오늘의 운동 루틴에 추가되었습니다!\n남은 운동 목록에서 세트 기록과 완료가 가능합니다.`);
+  switchView("routine");
 }
 
 // === 5. 유산소 50분 타이머 ===
@@ -1751,7 +2248,7 @@ function startCardioTimer() {
       if (AppState.cardioTimer.remainingSeconds === 0) {
         pauseCardioTimer();
         SoundEffects.playTimerDone();
-        alert("🎉 50분 유산소 운동 완료! 지방이 완벽하게 연소되었습니다!");
+        alert("🎉 목표 유산소 달리기 완료! 심폐 지구력과 지방 연소 목표를 달성하셨습니다!");
       }
     }
   }, 1000);
@@ -1769,7 +2266,7 @@ function pauseCardioTimer() {
 
 function resetCardioTimer() {
   pauseCardioTimer();
-  AppState.cardioTimer.remainingSeconds = 50 * 60;
+  AppState.cardioTimer.remainingSeconds = 30 * 60;
   updateCardioDisplay();
 }
 

@@ -142,15 +142,16 @@ const EXERCISES_MON_UPPER = [
   {
     id: "mon_u9",
     order: "9",
-    name: "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
-    alternative: "매트 크런치 / 플랭크",
+    name: "뉴텍 풀업 어시스트",
+    alternative: "랫풀다운 / 친업",
     machineId: "m11",
-    target: "하복부 (아랫배 맨몸 코어)",
-    setsReps: "3세트 × 15회",
-    restSec: 45,
-    isBodyweight: true,
-    tip: "팔꿈치 패드에 체중을 싣고 골반을 가슴 쪽으로 둥글게 말아 올리며 아랫배를 쥐어짭니다.",
-    youtubeQuery: "행잉 니레이즈 복근운동 팁"
+    target: "광배근 · 등 전체 · 이두",
+    setsReps: "3세트 × 10~12회",
+    restSec: 60,
+    isAssistedPullup: true,
+    isBodyweight: false,
+    tip: "핀 보조무게를 꽂으면 (체중 - 보조무게)만큼 당기게 됩니다. 가슴을 열고 등 근육으로 강하게 당깁니다.",
+    youtubeQuery: "어시스트 풀업 머신 사용법 자세"
   }
 ];
 
@@ -296,58 +297,22 @@ const EXERCISES_TUE_LOWER = [
   }
 ];
 
-// --- 수요일 : 유산소 버닝 (50분) (복근 없음!) ---
+// --- 수요일 : 유산소 (트레드밀 달리기) ---
 const EXERCISES_WED_CARDIO = [
-  {
-    id: "wed_c_warmup",
-    order: "웜업",
-    name: "가벼운 걷기 & 전신 관절 풀기",
-    machineId: null,
-    customImage: FITNESS_IMAGES.treadmillWarmup,
-    target: "심박수 서서히 상승",
-    setsReps: "5분 진행",
-    restSec: 0,
-    tip: "러닝머신 속도 4.0~5.0으로 가볍게 걸으며 몸을 덥힙니다.",
-    youtubeQuery: "러닝머신 워밍업 올바른 걷기",
-    isWarmup: true
-  },
   {
     id: "wed_c1",
     order: "1",
-    name: "트레드밀 인클라인 경사 걷기 (or 인터벌 러닝)",
-    alternative: "야외 조깅",
+    name: "트레드밀 달리기",
+    alternative: "야외 조깅 / 인터벌 러닝",
     machineId: null,
     customImage: FITNESS_IMAGES.treadmillIncline,
-    target: "하체 심폐 & 둔근 체지방 연소",
-    setsReps: "25분 지속 (경사도 6~10%, 속도 4.5~5.5)",
-    restSec: 60,
-    tip: "손잡이를 잡지 않고 팔을 흔들며 엉덩이와 종아리 뒤쪽 텐션을 느끼며 걷습니다.",
-    youtubeQuery: "인클라인 트레드밀 다이어트 효과"
-  },
-  {
-    id: "wed_c2",
-    order: "2",
-    name: "스텝밀 (천국의 계단) or 실내 사이클",
-    alternative: "사이클 페달링",
-    machineId: null,
-    customImage: FITNESS_IMAGES.stairmillCycle,
-    target: "심폐 극대화 & 하체 라인",
-    setsReps: "15분 집중 (속도 레벨 5~7)",
-    restSec: 60,
-    tip: "발바닥 전체로 계단을 딛고 허리를 편 채 엉덩이 힘으로 한 발 한 발 밀어 올립니다.",
-    youtubeQuery: "천국의계단 스텝밀 타는법 칼로리"
-  },
-  {
-    id: "wed_c3",
-    order: "3",
-    name: "쿨다운 워킹 & 심박수 안정화",
-    machineId: null,
-    customImage: FITNESS_IMAGES.cooldownWalking,
-    target: "피로물질 젖산 배출",
-    setsReps: "5분 진행",
+    target: "심폐 지구력 · 전신 체지방 연소",
+    setsReps: "30분 달리기",
     restSec: 0,
-    tip: "속도를 3.5 이하로 서서히 낮추고 깊은 호흡을 하며 심박수를 안정시 수준으로 되돌립니다.",
-    youtubeQuery: "유산소 쿨다운 스트레칭"
+    isCardioTime: true,
+    defaultMinutes: 30,
+    tip: "경사도 2~3%, 속도 7.0~9.0km/h로 일정한 페이스를 유지하며 30분간 지속합니다.",
+    youtubeQuery: "러닝머신 달리기 다이어트 효과"
   }
 ];
 
@@ -465,15 +430,16 @@ const EXERCISES_THU_UPPER = [
   {
     id: "thu_u9",
     order: "9",
-    name: "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
-    alternative: "매트 크런치 / 플랭크",
+    name: "뉴텍 풀업 어시스트",
+    alternative: "랫풀다운 / 친업",
     machineId: "m11",
-    target: "하복부 (아랫배 맨몸 코어)",
-    setsReps: "3세트 × 15회",
-    restSec: 45,
-    isBodyweight: true,
-    tip: "팔꿈치 패드에 체중을 싣고 골반을 가슴 쪽으로 둥글게 말아 올리며 아랫배를 쥐어짭니다.",
-    youtubeQuery: "행잉 니레이즈 복근운동 팁"
+    target: "광배근 · 등 전체 · 이두",
+    setsReps: "3세트 × 10~12회",
+    restSec: 60,
+    isAssistedPullup: true,
+    isBodyweight: false,
+    tip: "핀 보조무게를 꽂으면 (체중 - 보조무게)만큼 당기게 됩니다. 가슴을 열고 등 근육으로 강하게 당깁니다.",
+    youtubeQuery: "어시스트 풀업 머신 사용법 자세"
   }
 ];
 
@@ -712,16 +678,16 @@ const WEEKLY_ROUTINES = {
     estimatedTime: "약 65분",
     exercises: EXERCISES_TUE_LOWER
   },
-  // 수요일 : 유산소 (복근 없음)
+  // 수요일 : 유산소 (트레드밀)
   wed: {
     id: "wed",
     dayName: "수요일",
     dayShort: "수",
     dayNumber: 3,
     type: "cardio",
-    title: "수요일 : 유산소 버닝 데이 (50분)",
-    subtitle: "체지방 연소 & 심폐 지구력 집중 (복근 없음)",
-    estimatedTime: "50분",
+    title: "수요일 : 유산소 데이 (트레드밀)",
+    subtitle: "체지방 연소 & 심폐 지구력 러닝",
+    estimatedTime: "30분",
     exercises: EXERCISES_WED_CARDIO
   },
   // 목요일 : 상체 & 코어
@@ -748,16 +714,16 @@ const WEEKLY_ROUTINES = {
     estimatedTime: "약 65분",
     exercises: EXERCISES_FRI_LOWER
   },
-  // 토요일 : 유산소
+  // 토요일 : 유산소 (트레드밀)
   sat: {
     id: "sat",
     dayName: "토요일",
     dayShort: "토",
     dayNumber: 6,
     type: "cardio",
-    title: "토요일 : 유산소 버닝 데이 (50분)",
-    subtitle: "체지방 연소 & 심폐 지구력 강화 코스",
-    estimatedTime: "50분",
+    title: "토요일 : 유산소 데이 (트레드밀)",
+    subtitle: "체지방 연소 & 심폐 지구력 러닝",
+    estimatedTime: "30분",
     exercises: EXERCISES_SAT_CARDIO
   },
   // 일요일 : 스트레칭
@@ -815,6 +781,7 @@ const EXERCISE_BODY_PARTS = {
   "뉴텍 사이드 레터럴 레이즈 (핀머신)": "상체",
   "뉴텍 시티드 딥 (핀머신)": "상체",
   "뉴텍 암컬 (핀머신)": "상체",
+  "뉴텍 풀업 어시스트": "상체",
   "어깨 회전근개 & 동적 상체 스트레칭": "상체",
 
   // 복근 & 코어
@@ -825,6 +792,7 @@ const EXERCISE_BODY_PARTS = {
   "원암 덤벨 사이드 벤드 (덤벨존 활용)": "복근",
 
   // 유산소
+  "트레드밀 달리기": "유산소",
   "가벼운 걷기 & 전신 관절 풀기": "유산소",
   "트레드밀 인클라인 경사 걷기 (or 인터벌 러닝)": "유산소",
   "스텝밀 (천국의 계단) or 실내 사이클": "유산소",
@@ -925,6 +893,7 @@ const ALL_EDITABLE_EXERCISES = [
     items: [
       "뉴텍 시티드 체스트 프레스",
       "렉스코 랫풀다운",
+      "뉴텍 풀업 어시스트",
       "뉴텍 펙덱플라이 (핀머신)",
       "뉴텍 시티드로우 (핀머신)",
       "뉴텍 숄더프레스 (핀머신)",
@@ -939,7 +908,6 @@ const ALL_EDITABLE_EXERCISES = [
     items: [
       "복근운동 - 누워서 다리들기 (레그레이즈)",
       "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
-      "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",
       "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
       "원암 덤벨 사이드 벤드 (덤벨존 활용)"
     ]
@@ -947,6 +915,7 @@ const ALL_EDITABLE_EXERCISES = [
   {
     category: "유산소",
     items: [
+      "트레드밀 달리기",
       "트레드밀 인클라인 경사 걷기 (or 인터벌 러닝)",
       "스텝밀 (천국의 계단) or 실내 사이클",
       "가벼운 걷기 & 전신 관절 풀기",

@@ -1657,27 +1657,27 @@ body {
   color: var(--text-muted);
 }
 
-/* === 하단 플로팅 타이머 바 === */
+/* === 상단 플로팅 타이머 바 === */
 .floating-timer-bar {
   position: fixed;
-  bottom: 16px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 32px);
+  width: calc(100% - 20px);
   max-width: 600px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--accent-green);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1.5px solid var(--accent-green);
   border-radius: var(--radius-lg);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75);
+  z-index: 1000;
   overflow: hidden;
-  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes slideUp {
+@keyframes slideDown {
   from {
-    transform: translate(-50%, 100%);
+    transform: translate(-50%, -100%);
     opacity: 0;
   }
   to {
@@ -1686,49 +1686,143 @@ body {
   }
 }
 
+/* 초시계 완료 시 반짝임 애니메이션 */
+@keyframes timerFlashAlert {
+  0% {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: var(--accent-green);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    background: rgba(16, 185, 129, 0.9);
+    border-color: #fff;
+    box-shadow: 0 0 35px rgba(16, 185, 129, 1), inset 0 0 20px #fff;
+  }
+  100% {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: var(--accent-green);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.floating-timer-bar.timer-flash-alert {
+  animation: timerFlashAlert 0.25s ease-in-out infinite alternate !important;
+}
+
 .timer-bar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 8px 12px;
+  gap: 8px;
 }
 
 .timer-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .timer-icon {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .timer-texts {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.timer-top-line {
+  display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 5px;
 }
 
 .timer-title {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
 .timer-countdown {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--accent-green-light);
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
 }
 
 .timer-unit {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
+}
+
+.timer-sub-info {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+/* 다음 운동 기구 프리뷰 */
+.timer-next-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 3px 8px 3px 4px;
+  border-radius: var(--radius-sm);
+  max-width: 170px;
+  min-width: 0;
+}
+
+.timer-next-thumb-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #000;
+}
+
+.timer-next-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.timer-next-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.timer-next-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent-green-light);
+  letter-spacing: 0.5px;
+}
+
+.timer-next-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timer-bar-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .btn-timer-ctrl {
@@ -2823,5 +2917,429 @@ body {
     height: 24px;
     font-size: 11px;
   }
+
+  /* 모바일 날짜 및 배너 줄바꿈 완벽 방지 */
+  .today-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 6px 10px;
+  }
+
+  .today-date-info {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .today-badge {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    flex-shrink: 0;
+  }
+
+  .today-date-str {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
+
+  .today-routine-name {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 상단 타이머 모바일 축소 */
+  .floating-timer-bar {
+    top: 6px;
+    width: calc(100% - 12px);
+  }
+
+  .timer-next-preview {
+    max-width: 120px;
+  }
 }
+
+/* === 아코디언 토글 버튼 === */
+.btn-summary-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s;
+}
+
+.btn-summary-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-summary-toggle .toggle-arrow {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--accent-green-light);
+  transition: transform 0.2s ease;
+}
+
+.btn-summary-toggle.open .toggle-arrow {
+  transform: rotate(180deg);
+}
+
+/* === 유산소 시간(분) 입력 UI === */
+.cardio-time-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+
+.cardio-time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.cardio-time-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cardio-current-badge {
+  background: rgba(2, 132, 199, 0.2);
+  border: 1px solid var(--accent-blue);
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.cardio-time-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.time-preset-pill {
+  flex: 1;
+  min-width: 50px;
+  padding: 6px 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.time-preset-pill:hover,
+.time-preset-pill.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #fff;
+}
+
+.cardio-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cardio-custom-input {
+  width: 70px;
+  padding: 5px 8px;
+  background: #0f172a;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* === 체중 설정 모달 === */
+.weight-modal-card {
+  max-width: 380px;
+}
+
+.weight-input-group {
+  margin-bottom: 12px;
+}
+
+.weight-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.weight-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #0f172a;
+  border: 1.5px solid var(--accent-green);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+}
+
+.weight-input-wrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 800;
+  outline: none;
+  text-align: center;
+}
+
+.weight-unit {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-green-light);
+}
+
+.weight-quick-presets {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.weight-preset-btn {
+  flex: 1;
+  padding: 6px 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.weight-preset-btn:hover,
+.weight-preset-btn.active {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #000;
+  font-weight: 800;
+}
+
+/* === 풀업 어시스트 전용 뱃지 표기 === */
+.assisted-info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--accent-green-light);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+/* === 운동 도감 뷰 (Library View) === */
+.library-header-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.library-heading {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.library-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.lib-search-box {
+  margin-bottom: 12px;
+}
+
+.lib-search-box input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #0f172a;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.lib-search-box input:focus {
+  border-color: var(--accent-green);
+}
+
+.lib-filter-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lib-filter-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.lib-filter-btn:hover,
+.lib-filter-btn.active {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #000;
+  font-weight: 800;
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.lib-machine-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.lib-machine-card:hover {
+  border-color: var(--accent-green);
+  transform: translateY(-2px);
+}
+
+.lib-machine-thumb-wrap {
+  width: 100%;
+  height: 140px;
+  background: #000;
+  position: relative;
+  cursor: pointer;
+}
+
+.lib-machine-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lib-brand-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--accent-green-light);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.lib-card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.lib-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.lib-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.lib-card-target {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+.lib-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-add-today-routine {
+  flex: 1;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green-light);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-today-routine:hover {
+  background: var(--accent-green);
+  color: #000;
+}
+
+.btn-lib-guide {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
 

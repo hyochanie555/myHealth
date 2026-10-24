@@ -129,13 +129,13 @@ const MACHINES_DATA = [
   // --- 등 (BACK) ---
   {
     id: "m11",
-    name: "뉴텍 풀업머신 (어시스티드)",
+    name: "뉴텍 풀업 어시스트",
     brand: "NEWTECH",
     category: "back",
     categoryLabel: "등",
     target: "광배근 · 이두 · 코어",
     image: `${BASE_IMG_URL}/machine-photos/assisted-pullup.webp`,
-    setupTip: "핀 무게가 무거울수록 내 몸무게를 더 많이 받쳐주어 쉬워집니다.",
+    setupTip: "핀 무게가 무거울수록 내 몸무게를 더 많이 받쳐주어 쉬워집니다 (실제 든 중량 = 내 몸무게 - 핀 보조무게).",
     formTip: "가슴을 하늘 쪽으로 열며 쇄골이 바에 닿는 느낌으로 등 근육으로 당깁니다.",
     caution: "반동으로 몸을 튕기지 말고 등을 쥐어짜며 통제하세요."
   },
