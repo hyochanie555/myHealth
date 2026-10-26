@@ -838,6 +838,8 @@ function closeCustomDropdown() {
   }
 }
 
+let isInteractingPopover = false;
+
 // 화면 다른 곳을 터치하면 열려있는 커스텀 드롭다운 닫기
 document.addEventListener("pointerdown", (e) => {
   if (activeCustomDropdown && !e.target.closest(".custom-dropdown-popover") && !e.target.closest(".set-picker-trigger")) {
@@ -845,14 +847,14 @@ document.addEventListener("pointerdown", (e) => {
   }
 });
 
-// 화면 스크롤 시 열려있는 팝오버 닫기
+// 화면 스크롤 시 열려있는 팝오버 닫기 (단, 팝오버 목록 터치/스크롤 중에는 닫히지 않음)
 window.addEventListener("scroll", () => {
-  if (activeCustomDropdown) {
+  if (activeCustomDropdown && !isInteractingPopover) {
     closeCustomDropdown();
   }
 }, { passive: true });
 
-// 커스텀 드롭다운 열기 (모바일 OS 피커창/완료버튼 없이 페이지 내에서 바로 선택!)
+// 커스텀 드롭다운 열기 (화면 점프/스크롤 이동 없이 제자리에서 즉시 선택!)
 function openCustomDropdown(triggerBtn, type, currentVal, onSelect) {
   if (activeCustomDropdown && activeCustomDropdown._trigger === triggerBtn) {
     closeCustomDropdown();
@@ -863,6 +865,11 @@ function openCustomDropdown(triggerBtn, type, currentVal, onSelect) {
   const popover = document.createElement("div");
   popover.className = "custom-dropdown-popover";
   popover._trigger = triggerBtn;
+
+  popover.addEventListener("touchstart", () => { isInteractingPopover = true; }, { passive: true });
+  popover.addEventListener("touchend", () => { setTimeout(() => { isInteractingPopover = false; }, 200); }, { passive: true });
+  popover.addEventListener("pointerenter", () => { isInteractingPopover = true; });
+  popover.addEventListener("pointerleave", () => { isInteractingPopover = false; });
 
   let options = [];
   if (type === "weight") {
@@ -896,26 +903,32 @@ function openCustomDropdown(triggerBtn, type, currentVal, onSelect) {
   document.body.appendChild(popover);
   activeCustomDropdown = popover;
 
-  // 트리거 버튼 위치 기준 팝오버 배치
+  // 트리거 버튼 위치 기준 팝오버 배치 (화면 스크롤 없이 제자리에 배치)
   const rect = triggerBtn.getBoundingClientRect();
-  const popoverW = 115;
+  const popoverW = 120;
   let left = rect.left + window.scrollX;
   if (left + popoverW > window.innerWidth - 8) {
     left = window.innerWidth - popoverW - 8;
   }
+
+  const popoverH = 220;
   let top = rect.bottom + window.scrollY + 4;
-  if (rect.bottom + 230 > window.innerHeight && rect.top > 230) {
-    top = rect.top + window.scrollY - 224;
+  // 화면 하단 여백이 부족하고 상단 여백이 충분하면 버튼 위쪽으로 띄움
+  if (rect.bottom + popoverH > window.innerHeight && rect.top > popoverH) {
+    top = rect.top + window.scrollY - popoverH - 4;
   }
 
   popover.style.left = `${Math.max(8, left)}px`;
   popover.style.top = `${top}px`;
   popover.style.minWidth = `${Math.max(rect.width, 100)}px`;
 
-  // 현재 선택된 값으로 스크롤 이동
+  // 현재 선택된 값으로 popover '내부' 스크롤만 이동 (페이지 전체 창 스크롤 절대 방지!)
   const selItem = popover.querySelector(".custom-dropdown-item.selected");
   if (selItem) {
-    selItem.scrollIntoView({ block: "center", behavior: "instant" });
+    const itemOffset = selItem.offsetTop;
+    const itemH = selItem.offsetHeight;
+    const pHeight = popover.clientHeight;
+    popover.scrollTop = Math.max(0, itemOffset - (pHeight / 2) + (itemH / 2));
   }
 
   // 항목 터치 시 즉시 선택 & 닫기 (완료 버튼 누를 필요 없음!)
@@ -1434,16 +1447,35 @@ function dismissCardAndComplete(cardEl, ex) {
   setTimeout(() => {
     renderRoutineView();
 
-    // 남은 종목 중 최상단으로 화면 부드럽게 이동
+    // 남은 종목 중 최상단으로 화면 부드럽게 이동 (상단 고정 헤더 & 타이머 고려하여 처음부터 완벽히 보이도록 스크롤)
     const activeList = document.getElementById("activeExercisesList");
     if (activeList) {
       const firstCard = activeList.querySelector(".exercise-card");
       if (firstCard) {
-        firstCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        const header = document.querySelector(".app-header");
+        const headerH = header ? header.offsetHeight : 65;
+        const timerBar = document.getElementById("floatingTimerBar");
+        const isTimerVisible = timerBar && !timerBar.classList.contains("hidden") && timerBar.offsetHeight > 0;
+        const timerH = isTimerVisible ? (timerBar.getBoundingClientRect().bottom + 8) : 0;
+        const topOffset = Math.max(headerH, timerH) + 14;
+
+        const cardRect = firstCard.getBoundingClientRect();
+        const targetScrollY = window.scrollY + cardRect.top - topOffset;
+
+        window.scrollTo({
+          top: Math.max(0, targetScrollY),
+          behavior: "smooth"
+        });
       } else {
         const sectionTitle = document.querySelector(".section-title-bar");
         if (sectionTitle) {
-          sectionTitle.scrollIntoView({ behavior: "smooth", block: "start" });
+          const header = document.querySelector(".app-header");
+          const topOffset = (header ? header.offsetHeight : 65) + 14;
+          const rect = sectionTitle.getBoundingClientRect();
+          window.scrollTo({
+            top: Math.max(0, window.scrollY + rect.top - topOffset),
+            behavior: "smooth"
+          });
         }
       }
     }
@@ -2026,6 +2058,8 @@ function startRestTimer(seconds, currentEx = null, currentSetNumber = null) {
 
     if (nextImgEl) nextImgEl.src = nextImgUrl;
     if (nextNameEl) nextNameEl.textContent = nextEx.name;
+    const nextSubEl = document.getElementById("floatingTimerNextSub");
+    if (nextSubEl) nextSubEl.textContent = nextEx.target || "다음 기구 준비";
     nextPreviewEl.style.display = "flex";
   } else if (nextPreviewEl) {
     nextPreviewEl.style.display = "none";
@@ -2036,7 +2070,7 @@ function startRestTimer(seconds, currentEx = null, currentSetNumber = null) {
   AppState.restTimer.intervalId = setInterval(() => {
     AppState.restTimer.remainingSeconds--;
     if (AppState.restTimer.remainingSeconds <= 0) {
-      // 카운트다운 완료 시 반짝임 및 자동 꺼짐
+      // 카운트다운 완료 시 3초간 강력 반짝임 알림 후 자동 꺼짐
       clearInterval(AppState.restTimer.intervalId);
       AppState.restTimer.intervalId = null;
 
@@ -2045,21 +2079,24 @@ function startRestTimer(seconds, currentEx = null, currentSetNumber = null) {
       const fillEl = document.getElementById("timerProgressFill");
       if (fillEl) fillEl.style.width = "0%";
 
+      const setInfoEl = document.getElementById("floatingTimerSetInfo");
+      if (setInfoEl) setInfoEl.textContent = "🔔 휴식 완료! 다음 운동을 시작하세요!";
+
       // 완료 알림음 및 진동
       SoundEffects.playTimerDone();
       if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200, 100, 300]);
+        navigator.vibrate([300, 150, 300, 150, 400]);
       }
 
-      // 반짝이면서 알려줌
+      // 3초간 반짝이면서 알려줌
       if (bar) {
         bar.classList.add("timer-flash-alert");
       }
 
-      // 반짝임 후 자동 종료 (초시계 화면꺼짐)
+      // 3초 후 자동 종료 (초시계 화면꺼짐)
       setTimeout(() => {
         stopRestTimer();
-      }, 1200);
+      }, 3000);
     } else {
       updateTimerDisplay();
     }
@@ -2313,6 +2350,7 @@ function renderChartView() {
         items: [
           "뉴텍 숄더프레스 (핀머신)",
           "뉴텍 사이드 레터럴 레이즈 (핀머신)",
+          "행잉 레그 레이즈 (서서 다리 올리기)",
           "복근운동 - 누워서 다리들기 (레그레이즈)",
           "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
           "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)",

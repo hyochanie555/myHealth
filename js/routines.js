@@ -16,7 +16,8 @@ const FITNESS_IMAGES = {
   foamrollerLeg: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
   foamrollerGlute: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=600&q=80",
   hipPigeonStretch: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80",
-  neckShoulderStretch: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80"
+  neckShoulderStretch: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
+  hangingLegRaise: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80"
 };
 
 // 유튜브 한국어 인기 영상 검색 URL 헬퍼
@@ -271,16 +272,16 @@ const EXERCISES_TUE_LOWER = [
   {
     id: "tue_l8",
     order: "9",
-    name: "복근운동 - 누워서 다리들기 (레그레이즈)",
-    alternative: "풀업 머신 행잉 니 레이즈",
+    name: "행잉 레그 레이즈 (서서 다리 올리기)",
+    alternative: "행잉 니 레이즈 / 캡틴스 체어",
     machineId: null,
     customImage: FITNESS_IMAGES.hangingLegRaise,
-    target: "하복부 (아랫배 맨몸 코어)",
-    setsReps: "3세트 × 15~20회",
+    target: "하복부 집중 (아랫배 강력 코어 · 맨몸)",
+    setsReps: "3세트 × 12~15회",
     restSec: 45,
     isBodyweight: true,
-    tip: "매트에 누워 손을 엉덩이 밑에 받치고, 허리가 바닥에서 뜨지 않도록 아랫배를 지그시 누르며 다리를 올리고 내립니다.",
-    youtubeQuery: "누워서 레그레이즈 허리 안아프게 복근 자세"
+    tip: "기구 손잡이(또는 팔꿈치 패드)에 몸을 단단히 지지하고 서서, 반동 없이 아랫배를 말아 올리듯 무릎/다리를 가슴 쪽으로 끌어올립니다. 내릴 때도 천천히 버티며 복근 긴장을 유지하세요.",
+    youtubeQuery: "행잉 레그레이즈 초보자 자세 행잉 니레이즈"
   },
   {
     id: "tue_l9",
@@ -559,16 +560,16 @@ const EXERCISES_FRI_LOWER = [
   {
     id: "fri_l8",
     order: "9",
-    name: "복근운동 - 누워서 다리들기 (레그레이즈)",
-    alternative: "풀업 머신 행잉 니 레이즈",
+    name: "행잉 레그 레이즈 (서서 다리 올리기)",
+    alternative: "행잉 니 레이즈 / 캡틴스 체어",
     machineId: null,
     customImage: FITNESS_IMAGES.hangingLegRaise,
-    target: "하복부 (아랫배 맨몸 코어)",
-    setsReps: "3세트 × 15~20회",
+    target: "하복부 집중 (아랫배 강력 코어 · 맨몸)",
+    setsReps: "3세트 × 12~15회",
     restSec: 45,
     isBodyweight: true,
-    tip: "매트에 누워 손을 엉덩이 밑에 받치고, 허리가 바닥에서 뜨지 않도록 아랫배를 지그시 누르며 다리를 올리고 내립니다.",
-    youtubeQuery: "누워서 레그레이즈 허리 안아프게 복근 자세"
+    tip: "기구 손잡이(또는 팔꿈치 패드)에 몸을 단단히 지지하고 서서, 반동 없이 아랫배를 말아 올리듯 무릎/다리를 가슴 쪽으로 끌어올립니다. 내릴 때도 천천히 버티며 복근 긴장을 유지하세요.",
+    youtubeQuery: "행잉 레그레이즈 초보자 자세 행잉 니레이즈"
   },
   {
     id: "fri_l9",
@@ -785,6 +786,7 @@ const EXERCISE_BODY_PARTS = {
   "어깨 회전근개 & 동적 상체 스트레칭": "상체",
 
   // 복근 & 코어
+  "행잉 레그 레이즈 (서서 다리 올리기)": "복근",
   "복근운동 - 누워서 다리들기 (레그레이즈)": "복근",
   "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)": "복근",
   "풀업 머신 행잉 니 레이즈 (딥스 팔걸이 활용)": "복근",
@@ -906,6 +908,7 @@ const ALL_EDITABLE_EXERCISES = [
   {
     category: "복근 & 코어",
     items: [
+      "행잉 레그 레이즈 (서서 다리 올리기)",
       "복근운동 - 누워서 다리들기 (레그레이즈)",
       "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
       "풀업 머신 행잉 니 레이즈 (딥스 패드 활용)",
