@@ -16,8 +16,9 @@ const FITNESS_IMAGES = {
   foamrollerLeg: "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
   foamrollerGlute: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=600&q=80",
   hipPigeonStretch: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=80",
-  neckShoulderStretch: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
-  hangingLegRaise: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80"
+  hangingLegRaise: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=600&q=80",
+  smithSquat: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=600&q=80",
+  deadlift: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80"
 };
 
 // 유튜브 한국어 인기 영상 검색 URL 헬퍼
@@ -198,14 +199,15 @@ const EXERCISES_TUE_LOWER = [
   {
     id: "tue_l3",
     order: "3",
-    name: "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",
-    alternative: "뉴텍 브이스쿼트",
+    name: "바벨스쿼트 (스미스 머신)",
+    alternative: "프리모션 브이스쿼트",
     machineId: "m30",
-    target: "허벅지 전체 & 둔근",
+    customImage: FITNESS_IMAGES.smithSquat,
+    target: "허벅지 전체 & 둔근 (스쿼트 고중량)",
     setsReps: "4세트 × 10~12회",
     restSec: 90,
-    tip: "발을 살짝 앞에 두고 엉덩이를 뒤로 깊게 앉기. 뒤꿈치로 발판을 밀며 일어나기.",
-    youtubeQuery: "브이스쿼트 머신 자세 둔근"
+    tip: "발을 바벨보다 반 보 정도 앞에 두고 허리를 곧게 펴며 깊게 앉습니다. 뒤꿈치로 발판을 밀며 일어섭니다.",
+    youtubeQuery: "스미스머신 스쿼트 자세 발위치"
   },
   {
     id: "tue_l4",
@@ -246,32 +248,19 @@ const EXERCISES_TUE_LOWER = [
   {
     id: "tue_l6",
     order: "7",
-    name: "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
-    alternative: "부티빌더 힙쓰러스트",
+    name: "데드리프트 (힙쓰러스트)",
+    alternative: "뉴텍 힙 쓰러스트",
     machineId: "m25",
-    target: "둔근 & 허리(기립근) 강력 강화",
-    setsReps: "3세트 × 12~15회",
-    restSec: 60,
-    tip: "허리만 꺾지 말고 골반을 밀어 올리며 엉덩이 쥐어짜기! 정점에서 1~2초 정지.",
-    youtubeQuery: "힙쓰러스트 머신 엉덩이 자극"
-  },
-  {
-    id: "tue_l7",
-    order: "8",
-    name: "백익스텐션 (허리 기립근 & 둔근)",
-    alternative: "45도 하이퍼 익스텐션",
-    machineId: null,
-    customImage: FITNESS_IMAGES.backExtension,
-    target: "척추기립근 & 둔근 (맨몸 코어)",
-    setsReps: "3세트 × 15회",
-    restSec: 45,
-    isBodyweight: true,
-    tip: "패드를 골반 바로 아래 맞추고, 맨몸으로 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
-    youtubeQuery: "백익스텐션 허리 기립근 엉덩이 자세"
+    customImage: FITNESS_IMAGES.deadlift,
+    target: "후면 사슬 전반 (둔근 · 햄스트링 · 척추기립근)",
+    setsReps: "3세트 × 10~12회",
+    restSec: 90,
+    tip: "가슴을 활짝 펴고 코어를 단단히 잡은 채 고관절을 뒤로 접어 바벨을 정강이까지 내렸다가 둔근과 햄스트링 힘으로 힘차게 일어섭니다.",
+    youtubeQuery: "루마니안 데드리프트 자세 둔근"
   },
   {
     id: "tue_l8",
-    order: "9",
+    order: "8",
     name: "행잉 레그 레이즈 (서서 다리 올리기)",
     alternative: "행잉 니 레이즈 / 캡틴스 체어",
     machineId: null,
@@ -284,6 +273,20 @@ const EXERCISES_TUE_LOWER = [
     youtubeQuery: "행잉 레그레이즈 초보자 자세 행잉 니레이즈"
   },
   {
+    id: "tue_l7",
+    order: "9",
+    name: "백익스텐션 (허리 기립근 & 둔근)",
+    alternative: "45도 하이퍼 익스텐션",
+    machineId: null,
+    customImage: FITNESS_IMAGES.backExtension,
+    target: "척추기립근 & 둔근 (맨몸 코어)",
+    setsReps: "3세트 × 15회",
+    restSec: 45,
+    isBodyweight: true,
+    tip: "패드를 골반 바로 아래 맞추고, 맨몸으로 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
+    youtubeQuery: "백익스텐션 허리 기립근 엉덩이 자세"
+  },
+  {
     id: "tue_l9",
     order: "10",
     name: "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
@@ -293,7 +296,8 @@ const EXERCISES_TUE_LOWER = [
     target: "옆구리 (외복사근)",
     setsReps: "좌/우 각 3세트 × 15회",
     restSec: 45,
-    tip: "바벨이나 덤벨을 한 손에만 들고 옆으로 서서 반대쪽 옆구리가 깊게 쥐어짜지도록 수축합니다. 골반은 정면에 고정!",
+    isDoubleSide: true,
+    tip: "바벨이나 덤벨을 한 손에만 들고 옆으로 서서 반대쪽 옆구리가 깊게 쥐어짜지도록 수축합니다. 골반은 정면에 고정! (좌/우 양쪽 진행으로 볼륨 2배 계산)",
     youtubeQuery: "바벨 덤벨 사이드벤드 외복사근 옆구리"
   }
 ];
@@ -486,14 +490,15 @@ const EXERCISES_FRI_LOWER = [
   {
     id: "fri_l3",
     order: "3",
-    name: "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",
-    alternative: "뉴텍 브이스쿼트",
+    name: "바벨스쿼트 (스미스 머신)",
+    alternative: "프리모션 브이스쿼트",
     machineId: "m30",
-    target: "허벅지 전체 & 둔근",
+    customImage: FITNESS_IMAGES.smithSquat,
+    target: "허벅지 전체 & 둔근 (스쿼트 고중량)",
     setsReps: "4세트 × 10~12회",
     restSec: 90,
-    tip: "발을 살짝 앞에 두고 엉덩이를 뒤로 깊게 앉기. 뒤꿈치로 발판을 밀며 일어나기.",
-    youtubeQuery: "브이스쿼트 머신 자세 둔근"
+    tip: "발을 바벨보다 반 보 정도 앞에 두고 허리를 곧게 펴며 깊게 앉습니다. 뒤꿈치로 발판을 밀며 일어섭니다.",
+    youtubeQuery: "스미스머신 스쿼트 자세 발위치"
   },
   {
     id: "fri_l4",
@@ -534,32 +539,19 @@ const EXERCISES_FRI_LOWER = [
   {
     id: "fri_l6",
     order: "7",
-    name: "뉴텍 힙 쓰러스트 (or 부티 힙 쓰러스트)",
-    alternative: "부티빌더 힙쓰러스트",
+    name: "데드리프트 (힙쓰러스트)",
+    alternative: "뉴텍 힙 쓰러스트",
     machineId: "m25",
-    target: "둔근 & 허리(기립근) 강력 강화",
-    setsReps: "3세트 × 12~15회",
-    restSec: 60,
-    tip: "허리만 꺾지 말고 골반을 밀어 올리며 엉덩이 쥐어짜기! 정점에서 1~2초 정지.",
-    youtubeQuery: "힙쓰러스트 머신 엉덩이 자극"
-  },
-  {
-    id: "fri_l7",
-    order: "8",
-    name: "백익스텐션 (허리 기립근 & 둔근)",
-    alternative: "45도 하이퍼 익스텐션",
-    machineId: null,
-    customImage: FITNESS_IMAGES.backExtension,
-    target: "척추기립근 & 둔근 (맨몸 코어)",
-    setsReps: "3세트 × 15회",
-    restSec: 45,
-    isBodyweight: true,
-    tip: "패드를 골반 바로 아래 맞추고, 맨몸으로 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
-    youtubeQuery: "백익스텐션 허리 기립근 엉덩이 자세"
+    customImage: FITNESS_IMAGES.deadlift,
+    target: "후면 사슬 전반 (둔근 · 햄스트링 · 척추기립근)",
+    setsReps: "3세트 × 10~12회",
+    restSec: 90,
+    tip: "가슴을 활짝 펴고 코어를 단단히 잡은 채 고관절을 뒤로 접어 바벨을 정강이까지 내렸다가 둔근과 햄스트링 힘으로 힘차게 일어섭니다.",
+    youtubeQuery: "루마니안 데드리프트 자세 둔근"
   },
   {
     id: "fri_l8",
-    order: "9",
+    order: "8",
     name: "행잉 레그 레이즈 (서서 다리 올리기)",
     alternative: "행잉 니 레이즈 / 캡틴스 체어",
     machineId: null,
@@ -572,6 +564,20 @@ const EXERCISES_FRI_LOWER = [
     youtubeQuery: "행잉 레그레이즈 초보자 자세 행잉 니레이즈"
   },
   {
+    id: "fri_l7",
+    order: "9",
+    name: "백익스텐션 (허리 기립근 & 둔근)",
+    alternative: "45도 하이퍼 익스텐션",
+    machineId: null,
+    customImage: FITNESS_IMAGES.backExtension,
+    target: "척추기립근 & 둔근 (맨몸 코어)",
+    setsReps: "3세트 × 15회",
+    restSec: 45,
+    isBodyweight: true,
+    tip: "패드를 골반 바로 아래 맞추고, 맨몸으로 일직선이 될 때까지만 기립근과 둔근 힘으로 수축합니다.",
+    youtubeQuery: "백익스텐션 허리 기립근 엉덩이 자세"
+  },
+  {
     id: "fri_l9",
     order: "10",
     name: "옆구리운동 - 바벨 옆으로 들기 (사이드 벤드)",
@@ -581,7 +587,8 @@ const EXERCISES_FRI_LOWER = [
     target: "옆구리 (외복사근)",
     setsReps: "좌/우 각 3세트 × 15회",
     restSec: 45,
-    tip: "바벨이나 덤벨을 한 손에만 들고 옆으로 서서 반대쪽 옆구리가 깊게 쥐어짜지도록 수축합니다. 골반은 정면에 고정!",
+    isDoubleSide: true,
+    tip: "바벨이나 덤벨을 한 손에만 들고 옆으로 서서 반대쪽 옆구리가 깊게 쥐어짜지도록 수축합니다. 골반은 정면에 고정! (좌/우 양쪽 진행으로 볼륨 2배 계산)",
     youtubeQuery: "바벨 덤벨 사이드벤드 외복사근 옆구리"
   }
 ];
@@ -758,6 +765,8 @@ function getRoutineKeyForDay(dayNumber) {
 // 부위 판별용 전체 운동 사전
 const EXERCISE_BODY_PARTS = {
   // 하체
+  "바벨스쿼트 (스미스 머신)": "하체",
+  "데드리프트 (힙쓰러스트)": "하체",
   "뉴텍 레그 익스텐션": "하체",
   "뉴텍 레그 프레스 (or 시티드 레그 프레스)": "하체",
   "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)": "하체",
@@ -879,6 +888,8 @@ const ALL_EDITABLE_EXERCISES = [
   {
     category: "하체 & 힙",
     items: [
+      "바벨스쿼트 (스미스 머신)",
+      "데드리프트 (힙쓰러스트)",
       "뉴텍 레그 익스텐션",
       "뉴텍 레그 프레스 (or 시티드 레그 프레스)",
       "프리모션 브이스쿼트 (or 뉴텍 V-스쿼트)",

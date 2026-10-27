@@ -299,15 +299,15 @@ const MACHINES_DATA = [
   },
   {
     id: "m25",
-    name: "뉴텍 스탠딩 힙쓰러스트",
-    brand: "NEWTECH",
+    name: "데드리프트 (힙쓰러스트)",
+    brand: "BARBELL & SMITH",
     category: "legs",
     categoryLabel: "하체/힙",
-    target: "엉덩이(둔근) · 척추기립근 · 햄스트링",
-    image: `${BASE_IMG_URL}/machine-photos/newtech-hip-thrust.webp`,
-    setupTip: "골반 벨트나 패드를 골반 뼈 바로 아래에 단단히 고정합니다.",
-    formTip: "발뒤꿈치로 지면을 누르며 골반을 앞으로 힘차게 밀어 엉덩이를 최대로 수축합니다.",
-    caution: "허리를 과하게 꺾지 말고 골반을 말아 올린다는 느낌으로 진행합니다."
+    target: "후면 사슬 전반 (둔근 · 햄스트링 · 척추기립근)",
+    image: `https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80`,
+    setupTip: "바벨을 정강이 앞에 두고 어깨너비로 서서 그립을 단단히 잡습니다.",
+    formTip: "가슴을 활짝 열고 엉덩이를 뒤로 밀어 고관절을 접은 뒤 둔근과 햄스트링으로 밀어올립니다.",
+    caution: "허리가 둥글게 말리지 않도록 복압을 강하게 유지하세요."
   },
   {
     id: "m26",
@@ -359,15 +359,15 @@ const MACHINES_DATA = [
   },
   {
     id: "m30",
-    name: "프리모션 브이스쿼트",
-    brand: "FREEMOTION",
+    name: "바벨스쿼트 (스미스 머신)",
+    brand: "SMITH MACHINE",
     category: "legs",
     categoryLabel: "하체",
     target: "허벅지 전체 · 둔근 · 코어",
-    image: `${BASE_IMG_URL}/machine-photos/freemotion-v-squat.jpg`,
-    setupTip: "발을 발판 앞쪽에 두면 둔근/햄스트링, 뒤쪽에 두면 대퇴사두근에 집중됩니다.",
-    formTip: "자유로운 호를 그리는 프리모션 특유의 부드러운 궤적으로 관절 부담이 적습니다.",
-    caution: "허리가 굽지 않도록 가슴을 펴고 복압을 꽉 채우세요."
+    image: `https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=600&q=80`,
+    setupTip: "바벨 높이를 쇄골 아래로 맞추고, 발을 바벨보다 반 보 정도 앞에 위치시킵니다.",
+    formTip: "허리를 곧게 세운 채 엉덩이를 뒤로 빼며 깊게 앉았다가 뒤꿈치로 밀어 일어섭니다.",
+    caution: "무릎이 안쪽으로 모이지 않도록 발끝 방향으로 열어주세요."
   },
   {
     id: "m31",

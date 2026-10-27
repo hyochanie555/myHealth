@@ -381,6 +381,126 @@ body {
   font-weight: 600;
 }
 
+/* === 총 운동시간 측정 및 기록 섹션 === */
+.workout-timer-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.workout-timer-section.running {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+.workout-timer-section.finished {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+}
+
+.workout-timer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.workout-timer-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.workout-timer-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.workout-timer-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.workout-timer-section.running .workout-timer-status {
+  color: #34d399;
+}
+
+.workout-timer-digits {
+  font-size: 20px;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: 0.5px;
+}
+
+.workout-timer-section.running .workout-timer-digits {
+  color: #34d399;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+}
+
+.workout-timer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-timer-action {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-start-workout {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.btn-start-workout:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+}
+
+.btn-finish-workout {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+.btn-finish-workout:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+}
+
+.btn-reset-workout {
+  background: #334155;
+  color: #94a3b8;
+  border: 1px solid #475569;
+  padding: 8px 10px;
+}
+
+.btn-reset-workout:hover {
+  color: #fff;
+  background: #475569;
+}
+
 /* 유산소 타이머 박스 */
 .cardio-timer-box {
   margin-top: 14px;
@@ -1119,6 +1239,15 @@ body {
   font-size: 9px;
   font-weight: 800;
   color: #fbbf24;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cal-mini-time {
+  font-size: 9px;
+  font-weight: 800;
+  color: #38bdf8;
   white-space: nowrap;
   line-height: 1;
   flex-shrink: 0;
@@ -2478,6 +2607,40 @@ body {
   color: #fbbf24;
 }
 
+.panel-duration-banner {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.15)) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  justify-content: space-between;
+}
+
+.panel-duration-banner .vol-icon {
+  background-color: rgba(56, 189, 248, 0.2) !important;
+}
+
+.panel-duration-banner .vol-val {
+  color: #38bdf8 !important;
+  font-size: 16px;
+}
+
+.btn-edit-duration {
+  margin-left: auto;
+  align-self: center;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.btn-edit-duration:hover {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
 /* 기구별 세트 카드 (달력 상세) */
 .workout-detail-card {
   background-color: rgba(15, 23, 42, 0.7);
@@ -2928,6 +3091,24 @@ body {
     font-size: 8.5px;
   }
 
+  .cal-mini-time {
+    font-size: 8px;
+  }
+
+  .workout-timer-section {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .workout-timer-digits {
+    font-size: 17px;
+  }
+
+  .btn-timer-action {
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
+
   /* 세트 로거 드롭다운 모바일 핏 */
   .set-row {
     padding: 5px 6px;
@@ -3230,6 +3411,22 @@ body {
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: 4px;
+}
+
+/* 옆구리 양쪽 운동 2배 볼륨 뱃지 */
+.double-side-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
 }
 
 /* === 운동 도감 뷰 (Library View) === */

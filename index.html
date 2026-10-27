@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=20261026_01" />
+  <link rel="stylesheet" href="css/style.css?v=20261027_01" />
 </head>
 <body>
   <div id="app" class="app-container">
@@ -147,6 +147,22 @@
               <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
             </div>
             <div class="remaining-text" id="remainingCountText">남은 운동: 8개</div>
+          </div>
+
+          <!-- 총 운동시간 실시간 측정 및 기록 섹션 -->
+          <div id="workoutTimerSection" class="workout-timer-section">
+            <div class="workout-timer-left">
+              <span class="workout-timer-icon">⏱️</span>
+              <div class="workout-timer-info">
+                <span class="workout-timer-status" id="workoutTimerStatus">오늘의 총 운동시간</span>
+                <span class="workout-timer-digits" id="workoutTimerDigits">00:00:00</span>
+              </div>
+            </div>
+            <div class="workout-timer-actions">
+              <button type="button" id="btnStartWorkoutTimer" class="btn-timer-action btn-start-workout">▶ 운동 시작</button>
+              <button type="button" id="btnFinishWorkoutTimer" class="btn-timer-action btn-finish-workout hidden">⏹️ 운동 완료</button>
+              <button type="button" id="btnResetWorkoutTimer" class="btn-timer-action btn-reset-workout hidden" title="운동 시간 리셋">↺ 리셋</button>
+            </div>
           </div>
 
           <!-- 유산소 전용 러닝 타이머 컨트롤러 (유산소 요일일 때 노출) -->
@@ -291,6 +307,16 @@
               <span class="vol-label">당일 총 운동 볼륨</span>
               <span class="vol-val" id="panelVolumeValue">0 kg</span>
             </div>
+          </div>
+
+          <!-- 당일 총 운동시간 배너 -->
+          <div id="panelDurationBanner" class="panel-volume-banner panel-duration-banner hidden">
+            <span class="vol-icon">⏱️</span>
+            <div class="vol-texts">
+              <span class="vol-label">당일 총 운동시간</span>
+              <span class="vol-val" id="panelDurationValue">0분</span>
+            </div>
+            <button id="btnEditDuration" class="btn-text-sm btn-edit-duration" type="button" title="운동 시간 직접 수정">수정 ✏️</button>
           </div>
 
           <!-- 그 날의 운동 요약 및 편집 버튼 -->
@@ -611,8 +637,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/machines.js?v=20261026_01"></script>
-  <script src="js/routines.js?v=20261026_01"></script>
-  <script src="js/app.js?v=20261026_01"></script>
+  <script src="js/machines.js?v=20261027_01"></script>
+  <script src="js/routines.js?v=20261027_01"></script>
+  <script src="js/app.js?v=20261027_01"></script>
 </body>
 </html>
