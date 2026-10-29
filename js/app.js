@@ -117,6 +117,9 @@ const AppState = {
   // 기구별 직전 수행 세트 기록 맵 (key: exerciseName -> { sets: [...], maxWeight, totalVolume, date })
   lastExerciseLogs: {},
 
+  // 기구별 사용자 개인 메모 & 세팅값 (key: exerciseName -> string)
+  exerciseMemos: {},
+
   // 총 운동시간 측정 타이머
   workoutTimer: {
     isRunning: false,
@@ -245,6 +248,18 @@ function loadAllStoredData() {
 
   // 7. 총 운동시간 타이머 로드 및 복원
   initWorkoutTimer();
+
+  // 8. 기구별 사용자 메모 로드
+  const storedMemos = localStorage.getItem("myhealth_exercise_memos");
+  if (storedMemos) {
+    try {
+      AppState.exerciseMemos = JSON.parse(storedMemos);
+    } catch (e) {
+      AppState.exerciseMemos = {};
+    }
+  } else {
+    AppState.exerciseMemos = {};
+  }
 }
 
 // 구 기구명(프리모션 브이스쿼트 -> 바벨스쿼트 스미스머신, 힙쓰러스트 -> 데드리프트) 과거 세트/볼륨 이관
@@ -271,6 +286,7 @@ function migrateLegacyExerciseLogs() {
 
   let changedLastLogs = false;
   let changedCalendar = false;
+  let changedMemos = false;
 
   MIGRATIONS.forEach(({ legacy, target }) => {
     // 1. AppState.lastExerciseLogs 이관
@@ -308,10 +324,22 @@ function migrateLegacyExerciseLogs() {
         }
       }
     });
+
+    // 3. 기구별 메모 이관
+    if (!AppState.exerciseMemos[target]) {
+      for (const leg of legacy) {
+        if (AppState.exerciseMemos[leg]) {
+          AppState.exerciseMemos[target] = AppState.exerciseMemos[leg];
+          changedMemos = true;
+          break;
+        }
+      }
+    }
   });
 
   if (changedLastLogs) saveLastExerciseLogs();
   if (changedCalendar) saveCalendarData();
+  if (changedMemos) saveExerciseMemos();
 }
 
 // 과거 기록 조회 시 이관 매핑 fallback 지원
@@ -362,6 +390,10 @@ function saveLastExerciseLogs() {
 
 function saveCustomAddedExercises() {
   localStorage.setItem(`myhealth_custom_ex_${AppState.todayDateStr}`, JSON.stringify(AppState.customAddedExercises));
+}
+
+function saveExerciseMemos() {
+  localStorage.setItem("myhealth_exercise_memos", JSON.stringify(AppState.exerciseMemos));
 }
 
 function updateHeaderWeightDisplay() {
@@ -559,7 +591,17 @@ function bindEvents() {
         AppState.customAddedExercises.forEach(ex => {
           AppState.completedExerciseIds.delete(ex.id);
         });
+        // 오늘 날짜의 세트 완료 기록도 모두 초기화
+        const todayRec = AppState.calendarData[AppState.todayDateStr];
+        if (todayRec && todayRec.exerciseLogs) {
+          Object.values(todayRec.exerciseLogs).forEach(log => {
+            if (log.sets && Array.isArray(log.sets)) {
+              log.sets.forEach(s => { s.isCompleted = false; });
+            }
+          });
+        }
         saveCompletedExercises();
+        saveCalendarData();
         renderRoutineView();
       }
     });
@@ -1239,12 +1281,20 @@ function createExerciseCardElement(ex) {
   const isAssisted = Boolean(ex.isAssistedPullup || (ex.name && ex.name.includes("풀업 어시스트")));
   const isDoubleSide = Boolean(ex.isDoubleSide || (ex.name && ex.name.includes("사이드 벤드")));
 
+  // 초보자를 위한 상세 가이드 팁 추출
+  const setupTip = (machine && machine.setupTip)
+    ? machine.setupTip
+    : (ex.alternative ? `대체/머신: ${ex.alternative}` : "체형에 맞춰 손잡이와 좌석/발판 위치를 안정되게 세팅합니다.");
+  const formTip = (machine && machine.formTip)
+    ? machine.formTip
+    : (ex.tip || "반동 없이 목표 근육의 수축과 이완을 느끼며 천천히 진행합니다.");
+  const cautionTip = (machine && machine.caution)
+    ? machine.caution
+    : "관절에 무리한 부담이 가지 않도록 복압과 기본 정렬을 유지합니다.";
+
   // 사진 우선순위: ex.customImage > machine.image > 고품질 fallback
   const imgUrl = ex.customImage || (machine ? machine.image : "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80");
   const catLabel = machine ? machine.categoryLabel : (ex.isWarmup ? "웜업" : (ex.isCardioTime ? "유산소" : (ex.isBodyweight ? "맨몸" : "루틴")));
-
-  const ytQuery = ex.youtubeQuery || (machine ? machine.name + " 운동 사용법" : ex.name + " 운동");
-  const ytUrl = makeYoutubeSearchUrl(ytQuery);
 
   const isSetTrackable = !ex.isWarmup && !ex.isCardioTime && Boolean(ex.setsReps && ex.setsReps.includes("세트"));
   let setLoggerHtml = "";
@@ -1278,15 +1328,39 @@ function createExerciseCardElement(ex) {
     `;
   } else if (isSetTrackable) {
     const prevLog = getPreviousExerciseLog(ex.name);
+    const todayRec = AppState.calendarData[AppState.todayDateStr];
+    const todayLog = (todayRec && todayRec.exerciseLogs) ? todayRec.exerciseLogs[ex.name] : null;
+
     let initialSets = [];
     let prevHint = ex.isBodyweight ? "맨몸 운동 (횟수만 기록)" : "기본 권장 세트";
 
-    if (prevLog && prevLog.sets && prevLog.sets.length > 0) {
+    if (todayLog && todayLog.sets && todayLog.sets.length > 0 && todayLog.sets.some(s => s.isCompleted)) {
+      // 오늘 세션을 진행하면서 실제로 완료(체크)한 세트가 있는 경우: 해당 체크 상태 유지
+      // (단, 운동 카드가 아직 미완료인데 모든 세트가 완료 상태면 비정상 복제이므로 체크 해제)
+      const isCardDone = AppState.completedExerciseIds.has(ex.id);
+      const allDone = todayLog.sets.every(s => s.isCompleted);
+      initialSets = todayLog.sets.map((s, idx) => ({
+        set: idx + 1,
+        weight: s.weight,
+        reps: s.reps,
+        isCompleted: (!isCardDone && allDone) ? false : Boolean(s.isCompleted)
+      }));
+      if (ex.isBodyweight) {
+        prevHint = `오늘 진행: ${initialSets.length}세트 (최고 ${Math.max(...initialSets.map(s => s.reps))}회)`;
+      } else if (isAssisted) {
+        prevHint = `오늘 진행: 보조 ${initialSets[0]?.weight || 55}kg (실중량 ${Math.max(0, AppState.userWeight - (initialSets[0]?.weight || 55))}kg)`;
+      } else if (isDoubleSide) {
+        prevHint = `오늘 진행: 최고 ${Math.max(...initialSets.map(s => s.weight))}kg (양쪽×2 볼륨)`;
+      } else {
+        prevHint = `오늘 진행: 최고 ${Math.max(...initialSets.map(s => s.weight))}kg (${initialSets.length}세트)`;
+      }
+    } else if (prevLog && prevLog.sets && prevLog.sets.length > 0) {
+      // 이전 날짜 기록: 중량과 횟수는 그대로 가져오되, 시작 시점에는 체크 해제(초기화) 상태!
       initialSets = prevLog.sets.map((s, idx) => ({
         set: idx + 1,
         weight: s.weight,
         reps: s.reps,
-        isCompleted: s.isCompleted || false
+        isCompleted: false
       }));
       if (ex.isBodyweight) {
         prevHint = `직전 기록: ${initialSets.length}세트 (최고 ${Math.max(...initialSets.map(s => s.reps))}회)`;
@@ -1326,7 +1400,7 @@ function createExerciseCardElement(ex) {
     setLoggerHtml = `
       <div class="set-logger-wrap" id="logger_${ex.id}">
         <div class="set-logger-header">
-          <span class="set-logger-title">⚡ 세트별 기록 (터치 시 즉시 선택)</span>
+          <span class="set-logger-title">⚡ 세트별 기록</span>
           <span class="prev-log-hint">${escapeHtml(prevHint)}</span>
         </div>
         <div class="set-rows-list" id="rows_${ex.id}">
@@ -1361,14 +1435,41 @@ function createExerciseCardElement(ex) {
         </div>
       </div>
     </div>
-    <div class="card-tip-box">
-      <span class="tip-icon">💡</span>
-      <span>${ex.tip}</span>
+
+    <!-- 나의 운동 메모 & 기구 세팅값 -->
+    <div class="card-memo-section">
+      <div class="card-memo-header">
+        <span class="card-memo-icon">📝</span>
+        <span class="card-memo-title">나의 기구 세팅 &amp; 운동 메모</span>
+        <span class="card-memo-saved-hint hidden" id="memoSavedHint_${ex.id}">저장됨 ✔</span>
+      </div>
+      <div class="card-memo-input-wrap">
+        <input type="text" class="card-memo-input" id="memoInput_${ex.id}" 
+               placeholder="예: 안장 높이 4번, 손잡이 넓게 잡기, 허리 곧게 펴기" 
+               value="${escapeHtml(AppState.exerciseMemos[ex.name] || '')}" />
+      </div>
     </div>
+
+    <!-- 초보자를 위한 기구 상세 가이드 -->
+    <div class="card-detail-guide-box">
+      <div class="guide-item guide-setup">
+        <span class="guide-badge"><span class="guide-icon">⚙️</span> 기구 세팅</span>
+        <span class="guide-text">${escapeHtml(setupTip)}</span>
+      </div>
+      <div class="guide-item guide-form">
+        <span class="guide-badge"><span class="guide-icon">💡</span> 운동 자세</span>
+        <span class="guide-text">${escapeHtml(formTip)}</span>
+      </div>
+      <div class="guide-item guide-caution">
+        <span class="guide-badge"><span class="guide-icon">⚠️</span> 부상 주의</span>
+        <span class="guide-text">${escapeHtml(cautionTip)}</span>
+      </div>
+    </div>
+
     ${setLoggerHtml}
+
     <div class="card-actions">
       <button class="btn-card-action btn-guide" data-action="guide">📖 설명</button>
-      <a class="btn-card-action btn-youtube" href="${ytUrl}" target="_blank" rel="noopener noreferrer" title="유튜브에서 한국어 인기 영상 보기">▶ 영상</a>
       ${ex.restSec > 0 ? `<button class="btn-card-action btn-rest" data-action="rest" data-sec="${ex.restSec}">⏱️ ${ex.restSec}초</button>` : ''}
       <button class="btn-card-action btn-complete" data-action="complete">완료 ✔</button>
     </div>
@@ -1395,6 +1496,23 @@ function createExerciseCardElement(ex) {
   if (thumbWrap) thumbWrap.addEventListener("click", openGuide);
   if (titleEl) titleEl.addEventListener("click", openGuide);
   if (btnGuide) btnGuide.addEventListener("click", openGuide);
+
+  // 나의 운동 메모 입력 및 자동 저장 이벤트
+  const memoInput = card.querySelector(`#memoInput_${ex.id}`);
+  const memoSavedHint = card.querySelector(`#memoSavedHint_${ex.id}`);
+  if (memoInput) {
+    memoInput.addEventListener("input", (e) => {
+      AppState.exerciseMemos[ex.name] = e.target.value.trim();
+      saveExerciseMemos();
+      if (memoSavedHint) {
+        memoSavedHint.classList.remove("hidden");
+        clearTimeout(memoInput._saveTimer);
+        memoInput._saveTimer = setTimeout(() => {
+          memoSavedHint.classList.add("hidden");
+        }, 1200);
+      }
+    });
+  }
 
   // 초시계 버튼 클릭 시 상단 타이머 시작 (현재 세트 번호 및 다음 운동 자동 탐색)
   if (btnRest) {
@@ -3021,6 +3139,7 @@ function exportAllHealthData() {
     exportedAt: new Date().toISOString(),
     calendarData: AppState.calendarData || {},
     lastExerciseLogs: AppState.lastExerciseLogs || {},
+    exerciseMemos: AppState.exerciseMemos || {},
     dailyDones: {}
   };
 
@@ -3067,7 +3186,13 @@ function importAllHealthData(jsonStr) {
       saveLastExerciseLogs();
     }
 
-    // 3. 일별 완료 목록 복원
+    // 3. 기구별 메모 복원
+    if (data.exerciseMemos && typeof data.exerciseMemos === "object") {
+      AppState.exerciseMemos = { ...AppState.exerciseMemos, ...data.exerciseMemos };
+      saveExerciseMemos();
+    }
+
+    // 4. 일별 완료 목록 복원
     if (data.dailyDones && typeof data.dailyDones === "object") {
       Object.keys(data.dailyDones).forEach(k => {
         const val = data.dailyDones[k];
