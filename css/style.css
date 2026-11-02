@@ -798,58 +798,114 @@ body {
   font-size: 11px;
 }
 
-/* 초보자를 위한 카드 상세 가이드 박스 */
+/* 초보자를 위한 카드 상세 가이드 박스 (컴팩트 인라인 흐름) */
 .card-detail-guide-box {
-  background: rgba(15, 23, 42, 0.55);
-  padding: 9px 12px;
+  background: rgba(15, 23, 42, 0.65);
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  gap: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-.card-detail-guide-box .guide-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+.guide-compact-content {
   font-size: 11.5px;
-  line-height: 1.45;
+  line-height: 1.55;
+  color: #cbd5e1;
+  word-break: keep-all;
 }
 
-.card-detail-guide-box .guide-badge {
+.guide-inline-badge {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
   font-size: 10px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 3px;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.badge-form {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-setup {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.badge-caution {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.guide-inline-text {
+  margin-right: 8px;
+  color: #cbd5e1;
+}
+
+/* 설명 하단 권장 가이드 바 */
+.card-target-guide-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(16, 185, 129, 0.09);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+}
+
+.guide-target-badge {
+  background: #10b981;
+  color: #022c22;
+  font-size: 9.5px;
   font-weight: 800;
   padding: 1px 6px;
   border-radius: 4px;
   white-space: nowrap;
+  letter-spacing: -0.2px;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
-.guide-setup .guide-badge {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+.guide-target-val {
+  color: #e2e8f0;
+  font-size: 11.5px;
+  word-break: keep-all;
 }
 
-.guide-form .guide-badge {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+.guide-target-val strong {
+  color: #34d399;
+  font-weight: 700;
 }
 
-.guide-caution .guide-badge {
-  background: rgba(239, 68, 68, 0.12);
+.badge-main-lift {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.15);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.3);
+  margin-right: 4px;
 }
 
-.card-detail-guide-box .guide-text {
-  color: #cbd5e1;
-  word-break: keep-all;
+.badge-sub-lift {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  margin-right: 4px;
 }
 
 /* 카드 하단 액션 버튼들 */

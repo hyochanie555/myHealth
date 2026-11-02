@@ -1281,16 +1281,16 @@ function createExerciseCardElement(ex) {
   const isAssisted = Boolean(ex.isAssistedPullup || (ex.name && ex.name.includes("풀업 어시스트")));
   const isDoubleSide = Boolean(ex.isDoubleSide || (ex.name && ex.name.includes("사이드 벤드")));
 
-  // 초보자를 위한 상세 가이드 팁 추출
-  const setupTip = (machine && machine.setupTip)
+  // 초보자를 위한 상세 가이드 팁 추출 (커스텀 팁 지원)
+  const setupTip = ex.customSetupTip || ((machine && machine.setupTip)
     ? machine.setupTip
-    : (ex.alternative ? `대체/머신: ${ex.alternative}` : "체형에 맞춰 손잡이와 좌석/발판 위치를 안정되게 세팅합니다.");
-  const formTip = (machine && machine.formTip)
+    : (ex.alternative ? `대체/머신: ${ex.alternative}` : "체형에 맞춰 손잡이와 좌석/발판 위치를 안정되게 세팅합니다."));
+  const formTip = ex.customFormTip || ((machine && machine.formTip)
     ? machine.formTip
-    : (ex.tip || "반동 없이 목표 근육의 수축과 이완을 느끼며 천천히 진행합니다.");
-  const cautionTip = (machine && machine.caution)
+    : (ex.tip || "반동 없이 목표 근육의 수축과 이완을 느끼며 천천히 진행합니다."));
+  const cautionTip = ex.customCaution || ((machine && machine.caution)
     ? machine.caution
-    : "관절에 무리한 부담이 가지 않도록 복압과 기본 정렬을 유지합니다.";
+    : "관절에 무리한 부담이 가지 않도록 복압과 기본 정렬을 유지합니다.");
 
   // 사진 우선순위: ex.customImage > machine.image > 고품질 fallback
   const imgUrl = ex.customImage || (machine ? machine.image : "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80");
@@ -1424,6 +1424,7 @@ function createExerciseCardElement(ex) {
         <div>
           <div class="card-target-row">
             <span class="badge-cat">${catLabel}</span>
+            ${ex.isMain ? `<span class="badge-main-lift">🔥 메인 다관절</span>` : (ex.categoryRole ? `<span class="badge-sub-lift">${escapeHtml(ex.categoryRole)}</span>` : '')}
             <span class="card-target-text">${ex.target}</span>
           </div>
           <div class="card-title">${ex.name}</div>
@@ -1450,19 +1451,16 @@ function createExerciseCardElement(ex) {
       </div>
     </div>
 
-    <!-- 초보자를 위한 기구 상세 가이드 -->
+    <!-- 초보자를 위한 기구 상세 가이드 & 권장 수량/횟수 가이드 -->
     <div class="card-detail-guide-box">
-      <div class="guide-item guide-setup">
-        <span class="guide-badge"><span class="guide-icon">⚙️</span> 기구 세팅</span>
-        <span class="guide-text">${escapeHtml(setupTip)}</span>
+      <div class="guide-compact-content">
+        <span class="guide-inline-badge badge-form">💡 자세</span><span class="guide-inline-text">${escapeHtml(formTip)}</span>
+        <span class="guide-inline-badge badge-setup">⚙️ 세팅</span><span class="guide-inline-text">${escapeHtml(setupTip)}</span>
+        <span class="guide-inline-badge badge-caution">⚠️ 주의</span><span class="guide-inline-text">${escapeHtml(cautionTip)}</span>
       </div>
-      <div class="guide-item guide-form">
-        <span class="guide-badge"><span class="guide-icon">💡</span> 운동 자세</span>
-        <span class="guide-text">${escapeHtml(formTip)}</span>
-      </div>
-      <div class="guide-item guide-caution">
-        <span class="guide-badge"><span class="guide-icon">⚠️</span> 부상 주의</span>
-        <span class="guide-text">${escapeHtml(cautionTip)}</span>
+      <div class="card-target-guide-bar">
+        <span class="guide-target-badge">🎯 권장 가이드</span>
+        <span class="guide-target-val"><strong>${escapeHtml(ex.setsReps)}</strong>${ex.restSec > 0 ? ` · 휴식 ${ex.restSec}초` : ''}${ex.targetRpe ? ` · 강도 RPE ${ex.targetRpe}` : ''}</span>
       </div>
     </div>
 
